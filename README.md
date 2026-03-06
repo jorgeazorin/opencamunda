@@ -26,24 +26,24 @@ Todo el código funcional de Zeebe se conserva intacto.
 
 ## ¿Qué contiene?
 
-| Módulo | Descripción | Licencia |
-|---|---|---|
-| `zeebe/broker/` | Broker principal de Zeebe | ZCL 1.1 |
-| `zeebe/gateway/` | Gateway gRPC | ZCL 1.1 |
-| `zeebe/gateway-rest/` | Gateway REST | ZCL 1.1 |
-| `zeebe/engine/` | Motor de ejecución de procesos | ZCL 1.1 |
-| `zeebe/atomix/` | Capa de clustering (Raft) | Apache 2.0 |
-| `zeebe/bpmn-model/` | API de modelo BPMN | Apache 2.0 |
-| `zeebe/clients/java/` | Cliente Java | Apache 2.0 |
-| `zeebe/clients/zeebe-client-spring/` | Integración Spring Boot | Apache 2.0 |
-| `clients/go/` | Cliente Go | Apache 2.0 |
-| `zeebe/exporter-api/` | API de exportadores | Apache 2.0 |
-| `zeebe/exporters/` | Exportadores (Elasticsearch, OpenSearch) | ZCL 1.1 |
-| `zeebe/protocol/` | Definiciones del protocolo | Apache 2.0 |
-| `zeebe/dmn/` | Motor de decisiones DMN | ZCL 1.1 |
-| `zeebe/feel/` | Evaluador de expresiones FEEL | ZCL 1.1 |
-| `spring-boot-starter-camunda-sdk/` | Spring Boot Starter | Apache 2.0 |
-| `dist/` | Distribución empaquetada | ZCL 1.1 |
+|                Módulo                |               Descripción                |  Licencia  |
+|--------------------------------------|------------------------------------------|------------|
+| `zeebe/broker/`                      | Broker principal de Zeebe                | ZCL 1.1    |
+| `zeebe/gateway/`                     | Gateway gRPC                             | ZCL 1.1    |
+| `zeebe/gateway-rest/`                | Gateway REST                             | ZCL 1.1    |
+| `zeebe/engine/`                      | Motor de ejecución de procesos           | ZCL 1.1    |
+| `zeebe/atomix/`                      | Capa de clustering (Raft)                | Apache 2.0 |
+| `zeebe/bpmn-model/`                  | API de modelo BPMN                       | Apache 2.0 |
+| `zeebe/clients/java/`                | Cliente Java                             | Apache 2.0 |
+| `zeebe/clients/zeebe-client-spring/` | Integración Spring Boot                  | Apache 2.0 |
+| `clients/go/`                        | Cliente Go                               | Apache 2.0 |
+| `zeebe/exporter-api/`                | API de exportadores                      | Apache 2.0 |
+| `zeebe/exporters/`                   | Exportadores (Elasticsearch, OpenSearch) | ZCL 1.1    |
+| `zeebe/protocol/`                    | Definiciones del protocolo               | Apache 2.0 |
+| `zeebe/dmn/`                         | Motor de decisiones DMN                  | ZCL 1.1    |
+| `zeebe/feel/`                        | Evaluador de expresiones FEEL            | ZCL 1.1    |
+| `spring-boot-starter-camunda-sdk/`   | Spring Boot Starter                      | Apache 2.0 |
+| `dist/`                              | Distribución empaquetada                 | ZCL 1.1    |
 
 ## Características de Zeebe
 

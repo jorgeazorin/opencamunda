@@ -57,8 +57,8 @@ public interface BackupIdentifierWildcard {
     prefix.append("/");
 
     switch (wildcard.checkpointPattern()) {
-      case Exact(final var checkpointId) -> {
-        prefix.append(checkpointId);
+      case Exact exact -> {
+        prefix.append(exact.checkpointId());
         prefix.append("/");
         // Checkpoint pattern is exact so we can include node id if present
         if (wildcard.nodeId().isPresent()) {
@@ -66,8 +66,8 @@ public interface BackupIdentifierWildcard {
         }
       }
         // Checkpoint pattern is not exact so our prefix ends here, we can't include the node id
-      case Prefix(final var cpPrefix) -> prefix.append(cpPrefix);
-      case Any() -> {}
+      case Prefix p -> prefix.append(p.prefix());
+      case Any a -> {}
     }
     return prefix.toString();
   }
