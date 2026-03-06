@@ -35,22 +35,6 @@ scrape_configs:
           namespace: 'local'
           pod: 'broker-3'
 
-  - job_name: "tasklist"
-    metrics_path: /actuator/prometheus
-    static_configs:
-      - targets: ["tasklist:8090"]
-        labels:
-          namespace: 'local'
-          pod: 'tasklist'
-
-  - job_name: "operate"
-    metrics_path: /actuator/prometheus
-    static_configs:
-      - targets: ["operate:8080"]
-        labels:
-          namespace: 'local'
-          pod: 'operate'
-
   - job_name: "elasticsearch"
     metrics_path: /metrics
     static_configs:

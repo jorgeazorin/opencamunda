@@ -1,102 +1,97 @@
-# Zeebe - Workflow Engine for Microservices Orchestration
+# OpenCamunda — Fork libre de Zeebe 8.5
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.camunda.zeebe/camunda-zeebe/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.camunda.zeebe/camunda-zeebe)
+Fork comunitario del motor de workflow [Zeebe](https://github.com/camunda/zeebe) (Camunda Platform 8), basado en la **última versión antes del cambio de licencia a uso no productivo** (8.5.25).
 
-Zeebe provides visibility into and control over business processes that span multiple microservices. It is the engine that powers [Camunda Platform 8](https://camunda.com/platform/zeebe/).
+## ¿Por qué este fork?
 
-**Why Zeebe?**
+A partir de la versión 8.6, Camunda cambió la licencia del proyecto a una que **solo permite uso no productivo** sin pagar una licencia comercial. Este fork parte de la versión **8.5.25**, la última que mantiene la [Zeebe Community License v1.1](/licenses/ZEEBE-COMMUNITY-LICENSE-1.1.txt), que permite:
 
-* Define processes visually in [BPMN 2.0](https://www.omg.org/spec/BPMN/2.0.2/)
-* Choose your programming language
-* Deploy with [Docker](https://www.docker.com/) and [Kubernetes](https://kubernetes.io/)
-* Build processes that react to messages from [Kafka](https://kafka.apache.org/) and other message queues
-* Scale horizontally to handle very high throughput
-* Fault tolerance (no relational database required)
-* Export process data for monitoring and analysis
-* Engage with an active community
+- Uso **gratuito en producción** dentro de una empresa
+- Modificación, distribución y sublicenciamiento del código
+- La única restricción es que no se puede ofrecer como **servicio BPaaS a terceros** (Commercial Process Automation Service)
 
-[Learn more at camunda.com](https://camunda.com/platform/zeebe/)
+El objetivo de este fork es mantener una base de Zeebe que pueda seguir evolucionando libremente para uso empresarial interno sin depender de la licencia comercial de Camunda.
 
-## Release Lifecycle
+## ¿Qué se ha hecho?
 
-Our release cadence within major releases is a minor release every six months, with an alpha release on each of the five months between minor releases. Releases happen on the second Tuesday of the month, Berlin time (CET).
+Se ha limpiado el repositorio original eliminando todo lo que pertenecía a productos comerciales de Camunda que no forman parte del motor Zeebe:
 
-Minor releases are supported with patches for eighteen months after their release.
+- **Eliminados**: `operate/`, `optimize/`, `identity/` (stubs vacíos de productos comerciales)
+- **Eliminado**: `license/` (cabecera de licencia "non-production only" de Camunda 8.6+)
+- **Eliminados**: workflows de CI/CD, issue templates y GitHub Actions de Operate e Identity
+- **Eliminados**: dashboards de Grafana y configuración de Prometheus de Operate y Tasklist
+- **Limpiados**: referencias a repositorios Maven de Identity y exclusiones de Operate en los POMs
 
-Here is a diagram illustrating the lifecycle of minor releases over a 27-month period:
+Todo el código funcional de Zeebe se conserva intacto.
 
+## ¿Qué contiene?
+
+| Módulo | Descripción | Licencia |
+|---|---|---|
+| `zeebe/broker/` | Broker principal de Zeebe | ZCL 1.1 |
+| `zeebe/gateway/` | Gateway gRPC | ZCL 1.1 |
+| `zeebe/gateway-rest/` | Gateway REST | ZCL 1.1 |
+| `zeebe/engine/` | Motor de ejecución de procesos | ZCL 1.1 |
+| `zeebe/atomix/` | Capa de clustering (Raft) | Apache 2.0 |
+| `zeebe/bpmn-model/` | API de modelo BPMN | Apache 2.0 |
+| `zeebe/clients/java/` | Cliente Java | Apache 2.0 |
+| `zeebe/clients/zeebe-client-spring/` | Integración Spring Boot | Apache 2.0 |
+| `clients/go/` | Cliente Go | Apache 2.0 |
+| `zeebe/exporter-api/` | API de exportadores | Apache 2.0 |
+| `zeebe/exporters/` | Exportadores (Elasticsearch, OpenSearch) | ZCL 1.1 |
+| `zeebe/protocol/` | Definiciones del protocolo | Apache 2.0 |
+| `zeebe/dmn/` | Motor de decisiones DMN | ZCL 1.1 |
+| `zeebe/feel/` | Evaluador de expresiones FEEL | ZCL 1.1 |
+| `spring-boot-starter-camunda-sdk/` | Spring Boot Starter | Apache 2.0 |
+| `dist/` | Distribución empaquetada | ZCL 1.1 |
+
+## Características de Zeebe
+
+* Diseña procesos visualmente en [BPMN 2.0](https://www.omg.org/spec/BPMN/2.0.2/)
+* Elige tu lenguaje de programación (Java, Go, o cualquiera vía gRPC/REST)
+* Despliega con [Docker](https://www.docker.com/) y [Kubernetes](https://kubernetes.io/)
+* Construye procesos que reaccionan a mensajes de [Kafka](https://kafka.apache.org/) y otras colas
+* Escalado horizontal para alto rendimiento
+* Tolerancia a fallos (sin necesidad de base de datos relacional)
+* Exporta datos de procesos para monitorización y análisis
+
+## Documentación útil
+
+* [Conceptos técnicos](https://docs.camunda.io/docs/components/zeebe/technical-concepts/)
+* [Procesos BPMN](https://docs.camunda.io/docs/components/modeler/bpmn/bpmn-primer/)
+* [Instalación y configuración](https://docs.camunda.io/docs/self-managed/zeebe-deployment/)
+* [Cliente Java](https://docs.camunda.io/docs/apis-clients/java-client/)
+* [Cliente Go](https://docs.camunda.io/docs/apis-clients/go-client/)
+* [Construcción de imágenes Docker](/zeebe/docs/building_docker_images.md)
+
+## Construir desde fuente
+
+```bash
+./mvnw clean install -DskipTests
 ```
-2022                       2023                                2024
-Ap Ma Ju Ju Au Se Oc No De Ja Fe Ma Ap Ma Ju Ju Au Se Oc No De Ja Fe Ma Ap Ma Ju
-8.0--------------------------------------------------|
-                  8.1--------------------------------------------------|
-                                    8.2-----------------------------------------
-                                                      8.3-----------------------
-                                                                        8.4-----
-1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
-```
 
-Here is a diagram illustrating the release schedule of the five alpha releases prior to an upcoming minor release over a 7-month period:
+## Contribuir
 
-```
-2022                                2023
-Oct       Nov          Dec          Jan          Feb          Mar          Apr
-8.1-----------------------------------------------------------------------------
-          8.2-alpha1   8.2-alpha2   8.2-alpha3   8.2-alpha4   8.2-alpha5   8.2--
-1         2            3            4            5            6            7
-```
+Lee la [guía de contribución](/CONTRIBUTING.md).
 
-## Status
+## Licencia
 
-To learn more about what we're currently working on, check the [GitHub issues](https://github.com/camunda/zeebe/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and the [latest commits](https://github.com/camunda/zeebe/commits/main).
+Los archivos fuente de Zeebe están disponibles bajo la [Zeebe Community License
+Version 1.1](/licenses/ZEEBE-COMMUNITY-LICENSE-1.1.txt) excepto las partes listadas
+a continuación, que están bajo [Apache License, Version 2.0](/licenses/APACHE-2.0.txt).
+Consulta los archivos fuente individuales para más detalle.
 
-## Helpful Links
-
-* [Releases](https://github.com/camunda/zeebe/releases)
-* [Pre-built Docker images](https://hub.docker.com/r/camunda/zeebe/tags?page=1&ordering=last_updated)
-* [Building Docker images for other platforms](/zeebe/docs/building_docker_images.md)
-* [Blog](https://camunda.com/blog/category/process-automation-as-a-service/)
-* [Documentation Home](https://docs.camunda.io)
-* [Issue Tracker](https://github.com/camunda/zeebe/issues)
-* [User Forum](https://forum.camunda.io)
-* [Slack Channel](https://www.camunda.com/slack)
-* [Contribution Guidelines](/CONTRIBUTING.md)
-
-## Recommended Docs Entries for New Users
-
-* [What is Camunda Platform 8?](https://docs.camunda.io/docs/components/concepts/what-is-camunda-platform-8/)
-* [Getting Started Tutorial](https://docs.camunda.io/docs/guides/)
-* [Technical Concepts](https://docs.camunda.io/docs/components/zeebe/technical-concepts/)
-* [BPMN Processes](https://docs.camunda.io/docs/components/modeler/bpmn/bpmn-primer/)
-* [Installation and Configuration](https://docs.camunda.io/docs/self-managed/zeebe-deployment/)
-* [Java Client](https://docs.camunda.io/docs/apis-clients/java-client/)
-* [Go Client](https://docs.camunda.io/docs/apis-clients/go-client/)
-* [Spring Integration](https://github.com/camunda-community-hub/spring-zeebe/)
-
-## Contributing
-
-Read the [Contributions Guide](/CONTRIBUTING.md).
-
-## Code of Conduct
-
-This project adheres to the [Camunda Code of Conduct](https://camunda.com/events/code-conduct/).
-By participating, you are expected to uphold this code. Please [report](https://camunda.com/events/code-conduct/reporting-violations/)
-unacceptable behavior as soon as possible.
-
-## License
-
-Zeebe source files are made available under the [Zeebe Community License
-Version 1.1](/licenses/ZEEBE-COMMUNITY-LICENSE-1.1.txt) except for the parts listed
-below, which are made available under the [Apache License, Version
-2.0](/licenses/APACHE-2.0.txt).  See individual source files for details.
-
-Available under the [Apache License, Version 2.0](/licenses/APACHE-2.0.txt):
-- Java Client ([clients/java](/clients/java))
-- Go Client ([clients/go](/clients/go))
-- Exporter API ([exporter-api](/exporter-api))
-- Protocol ([protocol](/protocol))
-- Gateway Protocol Implementation ([gateway-protocol-impl](/gateway-protocol-impl))
-- BPMN Model API ([bpmn-model](/bpmn-model))
+Disponible bajo [Apache License, Version 2.0](/licenses/APACHE-2.0.txt):
+- Cliente Java ([clients/java](/zeebe/clients/java))
+- Cliente Go ([clients/go](/clients/go))
+- Exporter API ([exporter-api](/zeebe/exporter-api))
+- Protocol ([protocol](/zeebe/protocol))
+- Gateway Protocol Implementation ([gateway-protocol-impl](/zeebe/gateway-protocol-impl))
+- BPMN Model API ([bpmn-model](/zeebe/bpmn-model))
+- Atomix ([atomix](/zeebe/atomix))
+- Journal ([journal](/zeebe/journal))
+- Spring Boot Starter ([spring-boot-starter-camunda-sdk](/spring-boot-starter-camunda-sdk))
+- Benchmarks ([benchmarks](/zeebe/benchmarks/project))
 
 ### Clarification on gRPC Code Generation
 
