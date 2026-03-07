@@ -52,12 +52,14 @@ ZeebeClient client = ZeebeClient.newCloudClientBuilder()
 ## ZeebeClient - API Completa
 
 ### Topología
+
 ```java
 Topology topology = client.newTopologyRequest().send().join();
 // → brokers, partitions, clusterSize, replicationFactor
 ```
 
 ### Deploy de Recursos
+
 ```java
 DeploymentEvent result = client.newDeployResourceCommand()
     .addResourceFromClasspath("process.bpmn")       // BPMN desde classpath
@@ -71,6 +73,7 @@ DeploymentEvent result = client.newDeployResourceCommand()
 ```
 
 ### Crear Instancia de Proceso
+
 ```java
 // Por bpmnProcessId
 ProcessInstanceEvent instance = client.newCreateInstanceCommand()
@@ -100,6 +103,7 @@ String resultVars = result.getVariables(); // Variables finales
 ```
 
 ### Cancelar Instancia
+
 ```java
 client.newCancelInstanceCommand(processInstanceKey)
     .send()
@@ -107,6 +111,7 @@ client.newCancelInstanceCommand(processInstanceKey)
 ```
 
 ### Modificar Instancia (en vuelo)
+
 ```java
 client.newModifyProcessInstanceCommand(processInstanceKey)
     .activateElement("task-B")                // Activar elemento
@@ -117,6 +122,7 @@ client.newModifyProcessInstanceCommand(processInstanceKey)
 ```
 
 ### Migrar Instancia
+
 ```java
 client.newMigrateProcessInstanceCommand(processInstanceKey)
     .migrationPlan(targetProcessDefinitionKey)
@@ -126,6 +132,7 @@ client.newMigrateProcessInstanceCommand(processInstanceKey)
 ```
 
 ### Publicar Mensaje
+
 ```java
 client.newPublishMessageCommand()
     .messageName("payment-received")
@@ -139,6 +146,7 @@ client.newPublishMessageCommand()
 ```
 
 ### Broadcast Signal
+
 ```java
 client.newBroadcastSignalCommand()
     .signalName("order-shipped")
@@ -148,6 +156,7 @@ client.newBroadcastSignalCommand()
 ```
 
 ### Evaluar Decisión DMN
+
 ```java
 EvaluateDecisionResponse result = client.newEvaluateDecisionCommand()
     .decisionId("risk-assessment")
@@ -158,6 +167,7 @@ String output = result.getDecisionOutput();
 ```
 
 ### Set Variables
+
 ```java
 client.newSetVariablesCommand(elementInstanceKey)
     .variables(Map.of("status", "approved"))
@@ -167,6 +177,7 @@ client.newSetVariablesCommand(elementInstanceKey)
 ```
 
 ### Resolver Incidente
+
 ```java
 client.newResolveIncidentCommand(incidentKey)
     .send()
@@ -174,6 +185,7 @@ client.newResolveIncidentCommand(incidentKey)
 ```
 
 ### Borrar Recurso
+
 ```java
 client.newDeleteResourceCommand(resourceKey)
     .send()
@@ -183,6 +195,7 @@ client.newDeleteResourceCommand(resourceKey)
 ## Job Workers
 
 ### Patrón Básico
+
 ```java
 // Abrir worker para un tipo de job
 JobWorker worker = client.newWorker()
@@ -225,6 +238,7 @@ worker.close();
 ```
 
 ### Job Streaming (Moderno)
+
 ```java
 // Más eficiente que polling - el broker pushea jobs
 JobWorker worker = client.newWorker()
@@ -236,6 +250,7 @@ JobWorker worker = client.newWorker()
 ```
 
 ### Lanzar Error BPMN
+
 ```java
 // Desde un worker, lanzar un error BPMN (para boundary error events)
 jobClient.newThrowErrorCommand(job)
@@ -247,6 +262,7 @@ jobClient.newThrowErrorCommand(job)
 ```
 
 ### Actualizar Job
+
 ```java
 // Actualizar retries
 client.newUpdateRetriesCommand(jobKey)
@@ -344,6 +360,7 @@ future.whenComplete((result, error) -> {
 ## Dependencias del Cliente
 
 Solo necesitas:
+
 ```xml
 <dependency>
     <groupId>io.camunda</groupId>

@@ -50,19 +50,19 @@ En ambos casos se usa **exactamente la misma clase `Gateway`** — la diferencia
 
 ## Clases Clave
 
-| Clase | Módulo | Rol |
-|-------|--------|-----|
-| `Gateway` | `zeebe/gateway` | Clase core del gateway (compartida por ambos modos) |
-| `EmbeddedGatewayService` | `zeebe/broker` | Wrapper que gestiona el lifecycle del gateway dentro del broker |
-| `EmbeddedGatewayServiceStep` | `zeebe/broker` | Step del bootstrap del broker que instancia el gateway embebido |
-| `EmbeddedGatewayCfg` | `zeebe/broker` | Configuración del gateway embebido (`extends GatewayCfg` + `enable`) |
-| `StandaloneGateway` | `dist` | Aplicación Spring Boot para gateway separado |
-| `StandaloneBroker` | `dist` | Aplicación Spring Boot para broker (con o sin gateway embebido) |
-| `BrokerClientImpl` | `zeebe/broker-client` | Cliente que envía requests al broker vía Atomix MessagingService |
-| `GatewayBrokerTransportStep` | `zeebe/broker` | Crea el transporte que recibe comandos del gateway (siempre activo) |
-| `BrokerStartupProcess` | `zeebe/broker` | Orquesta el arranque del broker, decide si incluir el gateway |
-| `SpringBrokerBridge` | `zeebe/broker` | Puente para exponer servicios del broker a beans Spring |
-| `SpringGatewayBridge` | `zeebe/gateway` | Puente para exponer servicios del gateway a beans Spring |
+|            Clase             |        Módulo         |                                 Rol                                  |
+|------------------------------|-----------------------|----------------------------------------------------------------------|
+| `Gateway`                    | `zeebe/gateway`       | Clase core del gateway (compartida por ambos modos)                  |
+| `EmbeddedGatewayService`     | `zeebe/broker`        | Wrapper que gestiona el lifecycle del gateway dentro del broker      |
+| `EmbeddedGatewayServiceStep` | `zeebe/broker`        | Step del bootstrap del broker que instancia el gateway embebido      |
+| `EmbeddedGatewayCfg`         | `zeebe/broker`        | Configuración del gateway embebido (`extends GatewayCfg` + `enable`) |
+| `StandaloneGateway`          | `dist`                | Aplicación Spring Boot para gateway separado                         |
+| `StandaloneBroker`           | `dist`                | Aplicación Spring Boot para broker (con o sin gateway embebido)      |
+| `BrokerClientImpl`           | `zeebe/broker-client` | Cliente que envía requests al broker vía Atomix MessagingService     |
+| `GatewayBrokerTransportStep` | `zeebe/broker`        | Crea el transporte que recibe comandos del gateway (siempre activo)  |
+| `BrokerStartupProcess`       | `zeebe/broker`        | Orquesta el arranque del broker, decide si incluir el gateway        |
+| `SpringBrokerBridge`         | `zeebe/broker`        | Puente para exponer servicios del broker a beans Spring              |
+| `SpringGatewayBridge`        | `zeebe/gateway`       | Puente para exponer servicios del gateway a beans Spring             |
 
 ## Ubicación del Código
 
@@ -351,25 +351,25 @@ public void run(final String... args) throws Exception {
 
 ## Comparación Detallada
 
-| Aspecto | Embedded | Standalone |
-|---------|----------|------------|
-| **Proceso** | Mismo proceso que el broker | Proceso separado |
-| **Entry point** | `StandaloneBroker` | `StandaloneGateway` |
-| **Spring Profile** | `broker` | `gateway` |
-| **Clase Gateway** | `Gateway` (misma) | `Gateway` (misma) |
-| **Config prefix** | `zeebe.broker.gateway.*` | `zeebe.gateway.*` |
-| **Enable/Disable** | `zeebe.broker.gateway.enable=true/false` | N/A (si ejecutas el proceso, está activo) |
-| **Default** | Habilitado (`enable=true`) | N/A |
-| **AtomixCluster** | Reutiliza el del broker | Crea el suyo propio |
-| **BrokerClient** | `BrokerClientImpl` (Spring bean del broker) | `BrokerClientImpl` (Spring bean del gateway) |
-| **Comunicación con broker** | Atomix MessagingService (in-process, pero igualmente pasa por Atomix) | Atomix MessagingService (por red) |
-| **REST API** | Incluida (via `@ComponentScan` de `gateway.rest`) | Incluida (en el mismo proceso) |
-| **Deshabilitar REST** | Automático si `gateway.enable=false` | No aplica |
-| **Contact points** | Auto-configurados al broker local | Manual: `initialContactPoints` |
-| **Port gRPC** | 26500 (ajustado por `portOffset`) | 26500 |
-| **JobStreamClient** | Creado en `EmbeddedGatewayServiceStep` | Creado via Spring `@Bean` |
-| **Tolerancia a fallos** | Si el broker cae, el gateway cae | Si un broker cae, el gateway redirige a otros |
-| **Escalado independiente** | No es posible | Sí, puedes tener N gateways para M brokers |
+|           Aspecto           |                               Embedded                                |                  Standalone                   |
+|-----------------------------|-----------------------------------------------------------------------|-----------------------------------------------|
+| **Proceso**                 | Mismo proceso que el broker                                           | Proceso separado                              |
+| **Entry point**             | `StandaloneBroker`                                                    | `StandaloneGateway`                           |
+| **Spring Profile**          | `broker`                                                              | `gateway`                                     |
+| **Clase Gateway**           | `Gateway` (misma)                                                     | `Gateway` (misma)                             |
+| **Config prefix**           | `zeebe.broker.gateway.*`                                              | `zeebe.gateway.*`                             |
+| **Enable/Disable**          | `zeebe.broker.gateway.enable=true/false`                              | N/A (si ejecutas el proceso, está activo)     |
+| **Default**                 | Habilitado (`enable=true`)                                            | N/A                                           |
+| **AtomixCluster**           | Reutiliza el del broker                                               | Crea el suyo propio                           |
+| **BrokerClient**            | `BrokerClientImpl` (Spring bean del broker)                           | `BrokerClientImpl` (Spring bean del gateway)  |
+| **Comunicación con broker** | Atomix MessagingService (in-process, pero igualmente pasa por Atomix) | Atomix MessagingService (por red)             |
+| **REST API**                | Incluida (via `@ComponentScan` de `gateway.rest`)                     | Incluida (en el mismo proceso)                |
+| **Deshabilitar REST**       | Automático si `gateway.enable=false`                                  | No aplica                                     |
+| **Contact points**          | Auto-configurados al broker local                                     | Manual: `initialContactPoints`                |
+| **Port gRPC**               | 26500 (ajustado por `portOffset`)                                     | 26500                                         |
+| **JobStreamClient**         | Creado en `EmbeddedGatewayServiceStep`                                | Creado via Spring `@Bean`                     |
+| **Tolerancia a fallos**     | Si el broker cae, el gateway cae                                      | Si un broker cae, el gateway redirige a otros |
+| **Escalado independiente**  | No es posible                                                         | Sí, puedes tener N gateways para M brokers    |
 
 ## Detalle Importante: La Comunicación NO es "Directa"
 
@@ -480,12 +480,14 @@ zeebe:
 ## ¿Cuándo Usar Cada Modo?
 
 ### Embedded (default) — Para desarrollo y clusters pequeños
+
 - Setup más simple: un solo proceso
 - Menor latencia (comunicación in-process)
 - Menos componentes que gestionar
 - Útil para desarrollo local, testing, y producción simple
 
 ### Standalone — Para producción a escala
+
 - **Escalado independiente**: puedes tener 3 brokers y 5 gateways (o al revés)
 - **Aislamiento de fallos**: si un broker cae, los gateways redirigen a otros
 - **Balanceo de carga**: múltiples gateways detrás de un load balancer
@@ -549,3 +551,4 @@ StandaloneGateway.run()
       ├→ Crea gRPC Server en :26500
       └→ server.start()
 ```
+

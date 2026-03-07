@@ -6,14 +6,14 @@ Guía paso a paso para añadir un nuevo tipo de elemento BPMN al engine de Zeebe
 
 ## Archivos a Modificar/Crear
 
-| # | Archivo | Módulo | Acción |
-|---|---------|--------|--------|
-| 1 | `BpmnElementType.java` | protocol | Añadir enum value |
-| 2 | `ExecutableXxx.java` | engine (deployment/model) | Crear modelo ejecutable |
-| 3 | `XxxTransformer.java` | engine (deployment/transform) | Parser BPMN → modelo |
-| 4 | `XxxProcessor.java` | engine (processing/bpmn) | Lógica de ejecución |
-| 5 | `BpmnElementProcessors.java` | engine | Registrar processor |
-| 6 | `BpmnStreamProcessor.java` | engine | (normalmente no necesita cambio) |
+| # |           Archivo            |            Módulo             |              Acción              |
+|---|------------------------------|-------------------------------|----------------------------------|
+| 1 | `BpmnElementType.java`       | protocol                      | Añadir enum value                |
+| 2 | `ExecutableXxx.java`         | engine (deployment/model)     | Crear modelo ejecutable          |
+| 3 | `XxxTransformer.java`        | engine (deployment/transform) | Parser BPMN → modelo             |
+| 4 | `XxxProcessor.java`          | engine (processing/bpmn)      | Lógica de ejecución              |
+| 5 | `BpmnElementProcessors.java` | engine                        | Registrar processor              |
+| 6 | `BpmnStreamProcessor.java`   | engine                        | (normalmente no necesita cambio) |
 
 ## Paso 1: Definir el BpmnElementType
 
@@ -235,57 +235,58 @@ processors.put(
 ## Lifecycle del BpmnElementProcessor
 
 ```
-                    ┌─────────────────────┐
-                    │    ELEMENT_ACTIVATING │
-                    └──────────┬──────────┘
-                               │
-                    ┌──────────▼──────────┐
-                    │   onActivate()       │ ← inicializar, input mappings
-                    └──────────┬──────────┘
-                               │
-                    ┌──────────▼──────────┐
-                    │    ELEMENT_ACTIVATED  │
-                    └──────────┬──────────┘
-                               │
-          ┌────────────────────┼────────────────────┐
-          │ (si no wait-state) │                     │ (si wait-state)
-          │                    │                     │ esperar evento/job
-          │               ┌────▼─────┐               │
-          │               │ COMPLETING│               │
-          │               └────┬─────┘               │
-          │                    │                     │
-          │         ┌──────────▼──────────┐          │
-          │         │   onComplete()      │          │
-          │         └──────────┬──────────┘          │
-          │                    │                     │
-          │         ┌──────────▼──────────┐          │
-          │         │  ELEMENT_COMPLETED   │          │
-          │         └─────────────────────┘          │
-          │                                          │
-          │ (terminación)                  ┌─────────▼────────┐
-          └───────────────────────────────►│  onTerminate()   │
-                                          └─────────┬────────┘
-                                                    │
-                                          ┌─────────▼────────┐
-                                          │ ELEMENT_TERMINATED│
-                                          └──────────────────┘
+          ┌─────────────────────┐
+          │    ELEMENT_ACTIVATING │
+          └──────────┬──────────┘
+                     │
+          ┌──────────▼──────────┐
+          │   onActivate()       │ ← inicializar, input mappings
+          └──────────┬──────────┘
+                     │
+          ┌──────────▼──────────┐
+          │    ELEMENT_ACTIVATED  │
+          └──────────┬──────────┘
+                     │
+┌────────────────────┼────────────────────┐
+│ (si no wait-state) │                     │ (si wait-state)
+│                    │                     │ esperar evento/job
+│               ┌────▼─────┐               │
+│               │ COMPLETING│               │
+│               └────┬─────┘               │
+│                    │                     │
+│         ┌──────────▼──────────┐          │
+│         │   onComplete()      │          │
+│         └──────────┬──────────┘          │
+│                    │                     │
+│         ┌──────────▼──────────┐          │
+│         │  ELEMENT_COMPLETED   │          │
+│         └─────────────────────┘          │
+│                                          │
+│ (terminación)                  ┌─────────▼────────┐
+└───────────────────────────────►│  onTerminate()   │
+                                └─────────┬────────┘
+                                          │
+                                ┌─────────▼────────┐
+                                │ ELEMENT_TERMINATED│
+                                └──────────────────┘
 ```
 
 ## Behaviors Disponibles (BpmnBehaviors)
 
-| Behavior | Uso |
-|----------|-----|
-| `stateTransitionBehavior` | Transiciones de estado (activate, complete, terminate) |
-| `incidentBehavior` | Crear/resolver incidentes |
-| `variableMappingBehavior` | Input/output mappings de variables |
-| `eventSubscriptionBehavior` | Abrir/cerrar subscripciones a eventos |
-| `eventPublicationBehavior` | Publicar eventos |
-| `compensationSubscriptionBehaviour` | Gestionar compensaciones |
-| `bufferedMessageStartEventBehavior` | Mensajes de start event |
+|              Behavior               |                          Uso                           |
+|-------------------------------------|--------------------------------------------------------|
+| `stateTransitionBehavior`           | Transiciones de estado (activate, complete, terminate) |
+| `incidentBehavior`                  | Crear/resolver incidentes                              |
+| `variableMappingBehavior`           | Input/output mappings de variables                     |
+| `eventSubscriptionBehavior`         | Abrir/cerrar subscripciones a eventos                  |
+| `eventPublicationBehavior`          | Publicar eventos                                       |
+| `compensationSubscriptionBehaviour` | Gestionar compensaciones                               |
+| `bufferedMessageStartEventBehavior` | Mensajes de start event                                |
 
 ## Ejemplo Real Completo: ManualTask
 
 `ManualTaskProcessor.java`:
+
 ```java
 public class ManualTaskProcessor extends UndefinedTaskProcessor {
   public ManualTaskProcessor(
@@ -311,3 +312,4 @@ Hereda de `UndefinedTaskProcessor` que:
 - [ ] Tests unitarios (processor) escritos
 - [ ] Tests de integración (BPMN process completo) escritos
 - [ ] BPMN model XML de test creado
+

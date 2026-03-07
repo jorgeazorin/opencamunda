@@ -159,18 +159,18 @@ zeebe/feel/src/main/scala/io/camunda/zeebe/feel/impl/
 
 ### Tipos de Valores
 
-| Tipo FEEL | Ejemplo |
-|-----------|---------|
-| `number` | `42`, `3.14` |
-| `string` | `"hello"` |
-| `boolean` | `true`, `false` |
-| `date` | `date("2024-01-15")` |
-| `time` | `time("14:30:00")` |
+|    Tipo FEEL    |                Ejemplo                 |
+|-----------------|----------------------------------------|
+| `number`        | `42`, `3.14`                           |
+| `string`        | `"hello"`                              |
+| `boolean`       | `true`, `false`                        |
+| `date`          | `date("2024-01-15")`                   |
+| `time`          | `time("14:30:00")`                     |
 | `date and time` | `date and time("2024-01-15T14:30:00")` |
-| `duration` | `duration("PT2H30M")` |
-| `list` | `[1, 2, 3]` |
-| `context` | `{name: "John", age: 30}` |
-| `null` | `null` |
+| `duration`      | `duration("PT2H30M")`                  |
+| `list`          | `[1, 2, 3]`                            |
+| `context`       | `{name: "John", age: 30}`              |
+| `null`          | `null`                                 |
 
 ### Operaciones
 
@@ -183,15 +183,15 @@ String:        + (concatenación)
 
 ### Funciones Estándar FEEL
 
-| Categoría | Funciones |
-|-----------|----------|
-| **Agregación** | `count()`, `sum()`, `min()`, `max()`, `mean()` |
-| **String** | `concatenate()`, `substring()`, `string length()`, `upper case()`, `lower case()`, `contains()`, `starts with()`, `ends with()`, `matches()`, `replace()`, `split()` |
-| **Listas** | `list contains()`, `count()`, `min()`, `max()`, `sum()`, `mean()`, `sublist()`, `append()`, `concatenate()`, `insert before()`, `remove()`, `reverse()`, `index of()`, `union()`, `distinct values()`, `flatten()`, `sort()` |
-| **Contexto** | `get value()`, `get entries()`, `context put()`, `context merge()` |
-| **Conversión** | `string()`, `number()`, `date()`, `time()`, `duration()` |
-| **Temporal** | `now()`, `today()`, `day of week()`, `month of year()` |
-| **Rango** | `before()`, `after()`, `meets()`, `met by()`, `overlaps()`, `during()`, `includes()` |
+|   Categoría    |                                                                                                          Funciones                                                                                                           |
+|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Agregación** | `count()`, `sum()`, `min()`, `max()`, `mean()`                                                                                                                                                                               |
+| **String**     | `concatenate()`, `substring()`, `string length()`, `upper case()`, `lower case()`, `contains()`, `starts with()`, `ends with()`, `matches()`, `replace()`, `split()`                                                         |
+| **Listas**     | `list contains()`, `count()`, `min()`, `max()`, `sum()`, `mean()`, `sublist()`, `append()`, `concatenate()`, `insert before()`, `remove()`, `reverse()`, `index of()`, `union()`, `distinct values()`, `flatten()`, `sort()` |
+| **Contexto**   | `get value()`, `get entries()`, `context put()`, `context merge()`                                                                                                                                                           |
+| **Conversión** | `string()`, `number()`, `date()`, `time()`, `duration()`                                                                                                                                                                     |
+| **Temporal**   | `now()`, `today()`, `day of week()`, `month of year()`                                                                                                                                                                       |
+| **Rango**      | `before()`, `after()`, `meets()`, `met by()`, `overlaps()`, `during()`, `includes()`                                                                                                                                         |
 
 ### Funciones Custom de Zeebe
 
@@ -207,20 +207,20 @@ cycle(duration("PT1H"))       → "R/PT1H" (infinito)
 
 ### Dónde se usa FEEL en Zeebe
 
-| Contexto | Ejemplo |
-|----------|---------|
-| **Gateway XOR/OR conditions** | `= order.total > 100` |
-| **Input mappings** | `source="=customer.name"` |
-| **Output mappings** | `source="=result.status"` |
-| **Timer duration** | `= duration("PT5M")` |
-| **Timer date** | `= now() + duration("P1D")` |
-| **Timer cycle** | `= cycle(3, duration("PT10M"))` |
-| **Message correlation key** | `= order.orderId` |
-| **Multi-instance collection** | `= items` |
-| **Multi-instance element** | `= item` |
-| **Job type** | `= "process-" + order.type` |
-| **Script task** | `= a + b` |
-| **Decision table inputs/outputs** | Cualquier expresión FEEL |
+|             Contexto              |             Ejemplo             |
+|-----------------------------------|---------------------------------|
+| **Gateway XOR/OR conditions**     | `= order.total > 100`           |
+| **Input mappings**                | `source="=customer.name"`       |
+| **Output mappings**               | `source="=result.status"`       |
+| **Timer duration**                | `= duration("PT5M")`            |
+| **Timer date**                    | `= now() + duration("P1D")`     |
+| **Timer cycle**                   | `= cycle(3, duration("PT10M"))` |
+| **Message correlation key**       | `= order.orderId`               |
+| **Multi-instance collection**     | `= items`                       |
+| **Multi-instance element**        | `= item`                        |
+| **Job type**                      | `= "process-" + order.type`     |
+| **Script task**                   | `= a + b`                       |
+| **Decision table inputs/outputs** | Cualquier expresión FEEL        |
 
 ### Evaluación de Expresiones
 
@@ -253,16 +253,17 @@ Resultado: `{rate: 0.07}`
 
 ## Hit Policies Soportadas
 
-| Policy | Símbolo | Comportamiento |
-|--------|---------|---------------|
-| Unique | U | Exactamente una regla matchea |
-| First | F | Primera regla que matchea |
-| Priority | P | Regla con más prioridad |
-| Any | A | Cualquier regla (todas dan mismo resultado) |
-| Collect | C | Todas las reglas que matchean (lista) |
-| Collect Sum | C+ | Suma de outputs |
-| Collect Min | C< | Mínimo de outputs |
-| Collect Max | C> | Máximo de outputs |
-| Collect Count | C# | Cuenta de matches |
-| Rule Order | R | Todas en orden de regla |
-| Output Order | O | Todas ordenadas por output |
+|    Policy     | Símbolo |               Comportamiento                |
+|---------------|---------|---------------------------------------------|
+| Unique        | U       | Exactamente una regla matchea               |
+| First         | F       | Primera regla que matchea                   |
+| Priority      | P       | Regla con más prioridad                     |
+| Any           | A       | Cualquier regla (todas dan mismo resultado) |
+| Collect       | C       | Todas las reglas que matchean (lista)       |
+| Collect Sum   | C+      | Suma de outputs                             |
+| Collect Min   | C<      | Mínimo de outputs                           |
+| Collect Max   | C>      | Máximo de outputs                           |
+| Collect Count | C#      | Cuenta de matches                           |
+| Rule Order    | R       | Todas en orden de regla                     |
+| Output Order  | O       | Todas ordenadas por output                  |
+

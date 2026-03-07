@@ -44,6 +44,7 @@ public interface RecordProcessor {
 ```
 
 ### Contrato de `replay()`
+
 - Solo recibe records de tipo **EVENT**
 - **Puede** acceder a la DB (dentro de transacción)
 - **NO puede** escribir al log
@@ -51,6 +52,7 @@ public interface RecordProcessor {
 - **Propósito**: Reconstruir el estado determinísticamente desde el último snapshot
 
 ### Contrato de `process()`
+
 - Solo recibe records de tipo **COMMAND**
 - **Puede** acceder a la DB
 - **Puede** generar follow-up events/commands vía `ProcessingResultBuilder`
@@ -59,6 +61,7 @@ public interface RecordProcessor {
 - **Propósito**: Procesar comandos y generar resultados
 
 ### Contrato de `onProcessingError()`
+
 - Se invoca si `process()` lanza excepción o falla el commit
 - **Puede** generar rechazos
 - El processor es responsable de logging
@@ -178,6 +181,7 @@ Ciclo de Vida del StreamProcessor
 ```
 
 ### Campos Clave
+
 ```java
 LogStream logStream;                      // El log de la partición
 int partitionId;                          // ID de la partición
@@ -222,6 +226,7 @@ ProcessingStateMachine processingStateMachine; // Normal operation
 ## Dos Fases: Replay vs Processing
 
 ### Fase de Replay (Recuperación)
+
 ```
 Snapshot (punto de control)
     ↓
@@ -236,6 +241,7 @@ Pasar a fase de Processing
 ```
 
 ### Fase de Processing (Normal)
+
 ```
 Nuevo COMMAND llega al log (vía Raft)
     ↓
@@ -277,3 +283,4 @@ Esto garantiza que el estado siempre es consistente con el log.
 4. **Deterministic Replay**: Replay produce exactamente el mismo estado
 5. **Batch Atomicity**: Todos los records de un resultado se escriben juntos
 6. **Graceful Degradation**: `appendRecordReturnEither()` para manejar overflow sin excepciones
+

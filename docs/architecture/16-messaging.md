@@ -14,6 +14,7 @@ Casos de uso:
 ## Conceptos Clave
 
 ### Mensaje
+
 ```
 Un mensaje tiene:
   ├─ messageName: "payment-received"        ← Tipo de mensaje
@@ -24,6 +25,7 @@ Un mensaje tiene:
 ```
 
 ### Suscripción
+
 ```
 Una suscripción espera mensajes:
   ├─ messageName: "payment-received"        ← Tipo esperado
@@ -34,11 +36,11 @@ Una suscripción espera mensajes:
 
 ## Tipos de Suscripciones
 
-| Tipo | Cuándo se crea | Propósito |
-|------|---------------|----------|
-| **MessageSubscription** | Catch Event activado | Espera mensaje en catch event o receive task |
-| **ProcessMessageSubscription** | A nivel de instancia | Tracking a nivel de instancia de proceso |
-| **MessageStartEventSubscription** | Deploy de proceso | Inicia nueva instancia al recibir mensaje |
+|               Tipo                |    Cuándo se crea    |                  Propósito                   |
+|-----------------------------------|----------------------|----------------------------------------------|
+| **MessageSubscription**           | Catch Event activado | Espera mensaje en catch event o receive task |
+| **ProcessMessageSubscription**    | A nivel de instancia | Tracking a nivel de instancia de proceso     |
+| **MessageStartEventSubscription** | Deploy de proceso    | Inicia nueva instancia al recibir mensaje    |
 
 ## Flujo de Publicación de Mensaje
 
@@ -127,13 +129,13 @@ public boolean correlateNextMessage(
 
 ### Column Families
 
-| Column Family | Key | Value | Propósito |
-|--------------|-----|-------|----------|
-| `message` | messageKey | StoredMessage | Datos del mensaje |
-| `nameCorrelationMessage` | (tenant, name, corrKey, msgKey) | nil | Búsqueda por name+key |
-| `deadline` | (deadline, msgKey) | nil | Expiración por TTL |
-| `messageId` | (tenant, name, corrKey, msgId) | nil | Deduplicación |
-| `messageCorrelation` | (msgKey, bpmnProcessId) | nil | Tracking de qué proceso ya recibió |
+|      Column Family       |               Key               |     Value     |             Propósito              |
+|--------------------------|---------------------------------|---------------|------------------------------------|
+| `message`                | messageKey                      | StoredMessage | Datos del mensaje                  |
+| `nameCorrelationMessage` | (tenant, name, corrKey, msgKey) | nil           | Búsqueda por name+key              |
+| `deadline`               | (deadline, msgKey)              | nil           | Expiración por TTL                 |
+| `messageId`              | (tenant, name, corrKey, msgId)  | nil           | Deduplicación                      |
+| `messageCorrelation`     | (msgKey, bpmnProcessId)         | nil           | Tracking de qué proceso ya recibió |
 
 ### Operaciones Clave
 
@@ -170,6 +172,7 @@ Cada N segundos:
 ```
 
 ### Configuración
+
 - `executionInterval`: Intervalo entre ejecuciones
 - `batchLimit`: Máximo de EXPIRE por ejecución
 - `enableMessageTtlCheckerAsync`: Ejecución async
@@ -255,12 +258,14 @@ Flujo:
 ## Ejemplo Completo
 
 ### BPMN
+
 ```
 Start → Service Task → [Receive Task: "payment-received"] → End
                          correlationKey: "=orderId"
 ```
 
 ### Ejecución
+
 ```
 1. CreateProcessInstance({orderId: "ORD-123"})
    └─ PI creada en Partition 1
@@ -304,3 +309,4 @@ Si no match:
   Mensaje → espera hasta TTL expira → EXPIRED
   Suscripción → espera hasta catch event se cancela
 ```
+

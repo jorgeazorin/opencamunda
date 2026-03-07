@@ -166,11 +166,11 @@ public interface RemoteStream<M, P> {
 
 ### Errores de Streaming
 
-| Error | Cuándo |
-|-------|--------|
-| `StreamExhaustedException` | Stream sin capacidad |
-| `NoSuchStreamException` | Stream no existe |
-| `ClientStreamBlockedException` | Stream bloqueado |
+|             Error              |        Cuándo        |
+|--------------------------------|----------------------|
+| `StreamExhaustedException`     | Stream sin capacidad |
+| `NoSuchStreamException`        | Stream no existe     |
+| `ClientStreamBlockedException` | Stream bloqueado     |
 
 ## Uso en Zeebe
 
@@ -259,3 +259,4 @@ Puertos:
   26501: Command API (gateway → broker)
   26502: Internal API (broker ↔ broker, Raft)
 ```
+

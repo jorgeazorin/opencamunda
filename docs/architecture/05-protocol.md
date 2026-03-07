@@ -188,6 +188,7 @@ Esto permite identificar a qué partición pertenece cualquier entidad solo por 
 El enum `ZbColumnFamilies` define ~100 column families. Las principales por dominio:
 
 ### Procesos
+
 ```
 PROCESS_CACHE                        → Cache de definiciones de proceso
 PROCESS_CACHE_BY_ID_AND_VERSION      → Índice por bpmnProcessId + versión
@@ -196,12 +197,14 @@ PROCESS_VERSION                      → Última versión por processId
 ```
 
 ### Instancias de Proceso
+
 ```
 ELEMENT_INSTANCE_KEY                 → Instancias de elementos activos
 ELEMENT_INSTANCE_PARENT_CHILD        → Relación padre-hijo
 ```
 
 ### Jobs
+
 ```
 JOBS                                 → Datos del job
 JOB_STATES                           → Estado (activatable/activated/failed)
@@ -211,11 +214,13 @@ JOB_BACKOFF                          → Índice por tiempo de backoff
 ```
 
 ### Variables
+
 ```
 VARIABLES                            → Variables por scope
 ```
 
 ### Mensajes
+
 ```
 MESSAGE_KEY                          → Mensajes publicados
 MESSAGE_DEADLINES                    → Expiración de mensajes
@@ -225,12 +230,14 @@ MESSAGE_SUBSCRIPTION_BY_KEY          → Suscripciones activas
 ```
 
 ### Timers
+
 ```
 TIMERS                               → Timers programados
 TIMER_DUE_DATES                      → Índice por fecha de vencimiento
 ```
 
 ### Incidentes
+
 ```
 INCIDENTS                            → Incidentes activos
 INCIDENT_PROCESS_INSTANCES           → Índice por instancia de proceso
@@ -291,3 +298,4 @@ Esto permite al engine saber cómo deserializar el valor de un record y qué int
 4. Añadir mapping en `ValueTypeMapping`
 5. Crear implementación en `protocol-impl/`
 6. Regenerar código SBE: `mvn generate-sources -pl zeebe/protocol`
+

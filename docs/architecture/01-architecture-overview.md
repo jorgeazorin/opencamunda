@@ -109,15 +109,16 @@ Zeebe usa un patrón de **Command Sourcing** donde:
 
 ### Tipos de Records
 
-| Intent | Descripción | Ejemplo |
-|--------|-------------|---------|
-| COMMAND | Intención de cambio | `CREATE ProcessInstance` |
-| EVENT | Hecho consumado | `CREATED ProcessInstance` |
-| REJECTION | Comando rechazado | `REJECTED ProcessInstance (not found)` |
+|  Intent   |     Descripción     |                Ejemplo                 |
+|-----------|---------------------|----------------------------------------|
+| COMMAND   | Intención de cambio | `CREATE ProcessInstance`               |
+| EVENT     | Hecho consumado     | `CREATED ProcessInstance`              |
+| REJECTION | Comando rechazado   | `REJECTED ProcessInstance (not found)` |
 
 ## Componentes Principales
 
 ### 1. Gateway (`zeebe/gateway/`, `zeebe/gateway-rest/`)
+
 **Responsabilidad**: Punto de entrada para clientes
 
 - Expone API **gRPC** (puerto 26500) y **REST** (puerto 8080)
@@ -132,6 +133,7 @@ Zeebe usa un patrón de **Command Sourcing** donde:
 - `zeebe/gateway-rest/src/main/java/.../rest/` → controladores REST
 
 ### 2. Broker (`zeebe/broker/`)
+
 **Responsabilidad**: Servidor que gestiona particiones
 
 - Gestiona el ciclo de vida de **particiones**
@@ -141,6 +143,7 @@ Zeebe usa un patrón de **Command Sourcing** donde:
 - Expone endpoints de **admin** y **health**
 
 **Subsistemas del Broker**:
+
 ```
 broker/
 ├── bootstrap/     → Secuencia de arranque (pasos ordenados)
@@ -156,6 +159,7 @@ broker/
 ```
 
 ### 3. Engine (`zeebe/engine/`) — `zeebe-workflow-engine`
+
 **Responsabilidad**: Motor de ejecución BPMN
 
 - Procesa **comandos** y genera **eventos**
@@ -167,7 +171,9 @@ broker/
 **Dos subsistemas principales**:
 
 #### Processing (`engine/processing/`)
+
 Contiene los **procesadores de comandos** organizados por dominio:
+
 ```
 processing/
 ├── bpmn/           → Ejecución de elementos BPMN
@@ -185,7 +191,9 @@ processing/
 ```
 
 #### State (`engine/state/`)
+
 Gestiona el **estado persistente** en RocksDB:
+
 ```
 state/
 ├── appliers/      → Aplican eventos al estado (actualizan RocksDB)
@@ -198,6 +206,7 @@ state/
 ```
 
 ### 4. Protocolo (`zeebe/protocol/`, `zeebe/protocol-impl/`)
+
 **Responsabilidad**: Formato binario de serialización
 
 - Define los **tipos de records** (ProcessInstance, Job, Message, etc.)
@@ -206,12 +215,14 @@ state/
 - Define las **intents** de cada tipo de record
 
 ### 5. Log y Streaming (`zeebe/logstreams/`, `zeebe/stream-platform/`)
+
 **Responsabilidad**: Almacenamiento y procesamiento del log de eventos
 
 - **Logstreams**: Abstracción append-only sobre el journal/Raft
 - **Stream Platform**: Framework que lee records del log, los procesa, y escribe resultados
 
 ### 6. Almacenamiento (`zeebe/zb-db/`, `zeebe/snapshot/`, `zeebe/journal/`)
+
 **Responsabilidad**: Persistencia
 
 - **zb-db**: Abstracción sobre RocksDB con typed column families
@@ -219,6 +230,7 @@ state/
 - **journal**: Write-ahead log para durabilidad
 
 ### 7. Clustering (`zeebe/atomix/`, `zeebe/topology/`)
+
 **Responsabilidad**: Distribución y consenso
 
 - **Atomix**: Implementación de Raft + SWIM failure detection
@@ -227,6 +239,7 @@ state/
 ## Flujo de Datos Detallado
 
 ### Deploy de un Proceso
+
 ```
 1. Cliente: deployProcess("myProcess.bpmn")
 2. Gateway: → Broker (partición 1, deployment partition)
@@ -240,6 +253,7 @@ state/
 ```
 
 ### Crear Instancia de Proceso
+
 ```
 1. Cliente: createProcessInstance("myProcess", variables)
 2. Gateway: → Broker (partición por hash de key)
@@ -259,6 +273,7 @@ state/
 ```
 
 ### Ejecutar un Service Task (Job)
+
 ```
 1. Engine activa un Service Task
 2. Log: EVENT JobCreated (con type, retries, variables)
@@ -282,11 +297,13 @@ state/
 ## Modelo de Datos
 
 ### Keys y Particiones
+
 - Cada entidad tiene una **key** de 64 bits
 - Los primeros bits codifican la **partición**
 - Ejemplo: key `2251799813685249` → partición 1, posición 1
 
 ### Column Families (RocksDB)
+
 El estado se organiza en **column families** (definidas en `ZbColumnFamilies`):
 - `PROCESS_CACHE` → Definiciones de procesos desplegados
 - `ELEMENT_INSTANCE_KEY` → Instancias de elementos activos

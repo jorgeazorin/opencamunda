@@ -125,6 +125,7 @@ Directorios:
 ```
 
 ### Restricciones
+
 - **Serial**: Solo un snapshot a la vez (single Actor)
 - **Copy-on-write**: RocksDB checkpoint es instantáneo gracias a copy-on-write
 - **Integridad**: SFV checksums verifican cada archivo del snapshot
@@ -336,19 +337,21 @@ DELETED  DELETED    │  [1401..1500]  [1501..2000] [2001..] │
 ## Configuración
 
 ### Snapshot
-| Parámetro | Descripción |
-|-----------|-------------|
-| Directorio por partición | Cada partición tiene su snapshot store |
-| SFV checksums | Verificación de integridad archivo por archivo |
-| Version = 1 | Formato actual |
+
+|        Parámetro         |                  Descripción                   |
+|--------------------------|------------------------------------------------|
+| Directorio por partición | Cada partición tiene su snapshot store         |
+| SFV checksums            | Verificación de integridad archivo por archivo |
+| Version = 1              | Formato actual                                 |
 
 ### Journal
-| Parámetro | Default | Descripción |
-|-----------|---------|-------------|
-| `maxSegmentSize` | 256MB | Tamaño por segmento |
-| `journalIndexDensity` | 100 | Crear índice cada N records |
-| `preallocateSegmentFiles` | true | Pre-alocar archivos |
-| `directory` | Configurable | Directorio de almacenamiento |
+
+|         Parámetro         |   Default    |         Descripción          |
+|---------------------------|--------------|------------------------------|
+| `maxSegmentSize`          | 256MB        | Tamaño por segmento          |
+| `journalIndexDensity`     | 100          | Crear índice cada N records  |
+| `preallocateSegmentFiles` | true         | Pre-alocar archivos          |
+| `directory`               | Configurable | Directorio de almacenamiento |
 
 ## Layout Completo en Disco
 
@@ -369,3 +372,4 @@ data/
         ├── journal-9.log
         └── journal-10.log                 ← más reciente (en escritura)
 ```
+

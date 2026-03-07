@@ -20,33 +20,33 @@ zeebe/gateway-rest/                  ← Gateway REST (Spring controllers)
 ## Arquitectura del Gateway
 
 ```
-                    Clientes
-                       │
-          ┌────────────┼────────────┐
-          │ gRPC :26500│REST :8080  │
-          │            │            │
-    ┌─────▼────┐  ┌────▼──────┐    │
-    │Interceptors│  │Spring    │    │
-    │(auth,     │  │Controllers│    │
-    │metrics)   │  │           │    │
-    └─────┬─────┘  └────┬──────┘    │
-          │              │           │
-    ┌─────▼──────────────▼──────┐   │
-    │     EndpointManager       │   │
-    │  (dispatch central)       │   │
-    └────────────┬──────────────┘   │
-                 │                   │
-    ┌────────────▼──────────────┐   │
-    │     RequestMapper         │   │
-    │  Proto/REST → BrokerReq   │   │
-    └────────────┬──────────────┘   │
-                 │                   │
-    ┌────────────▼──────────────┐   │
-    │      BrokerClient         │   │
-    │  (envía al broker)        │   │
-    └────────────┬──────────────┘   │
-                 │                   │
-          Broker (partición correcta)
+                Clientes
+                   │
+      ┌────────────┼────────────┐
+      │ gRPC :26500│REST :8080  │
+      │            │            │
+┌─────▼────┐  ┌────▼──────┐    │
+│Interceptors│  │Spring    │    │
+│(auth,     │  │Controllers│    │
+│metrics)   │  │           │    │
+└─────┬─────┘  └────┬──────┘    │
+      │              │           │
+┌─────▼──────────────▼──────┐   │
+│     EndpointManager       │   │
+│  (dispatch central)       │   │
+└────────────┬──────────────┘   │
+             │                   │
+┌────────────▼──────────────┐   │
+│     RequestMapper         │   │
+│  Proto/REST → BrokerReq   │   │
+└────────────┬──────────────┘   │
+             │                   │
+┌────────────▼──────────────┐   │
+│      BrokerClient         │   │
+│  (envía al broker)        │   │
+└────────────┬──────────────┘   │
+             │                   │
+      Broker (partición correcta)
 ```
 
 ## API gRPC Completa
@@ -54,40 +54,44 @@ zeebe/gateway-rest/                  ← Gateway REST (Spring controllers)
 Definida en `zeebe/gateway-protocol/src/main/proto/gateway.proto`:
 
 ### Operaciones de Procesos
-| RPC | Request | Response | Descripción |
-|-----|---------|----------|-------------|
-| `DeployResource` | `DeployResourceRequest` | `DeployResourceResponse` | Deploy BPMN/DMN/Form |
-| `CreateProcessInstance` | `CreateProcessInstanceRequest` | `CreateProcessInstanceResponse` | Crear instancia |
+
+|                RPC                |                 Request                  |                 Response                  |        Descripción        |
+|-----------------------------------|------------------------------------------|-------------------------------------------|---------------------------|
+| `DeployResource`                  | `DeployResourceRequest`                  | `DeployResourceResponse`                  | Deploy BPMN/DMN/Form      |
+| `CreateProcessInstance`           | `CreateProcessInstanceRequest`           | `CreateProcessInstanceResponse`           | Crear instancia           |
 | `CreateProcessInstanceWithResult` | `CreateProcessInstanceWithResultRequest` | `CreateProcessInstanceWithResultResponse` | Crear y esperar resultado |
-| `CancelProcessInstance` | `CancelProcessInstanceRequest` | `CancelProcessInstanceResponse` | Cancelar instancia |
-| `ModifyProcessInstance` | `ModifyProcessInstanceRequest` | `ModifyProcessInstanceResponse` | Modificar en vuelo |
-| `MigrateProcessInstance` | `MigrateProcessInstanceRequest` | `MigrateProcessInstanceResponse` | Migrar a nueva versión |
+| `CancelProcessInstance`           | `CancelProcessInstanceRequest`           | `CancelProcessInstanceResponse`           | Cancelar instancia        |
+| `ModifyProcessInstance`           | `ModifyProcessInstanceRequest`           | `ModifyProcessInstanceResponse`           | Modificar en vuelo        |
+| `MigrateProcessInstance`          | `MigrateProcessInstanceRequest`          | `MigrateProcessInstanceResponse`          | Migrar a nueva versión    |
 
 ### Operaciones de Jobs
-| RPC | Request | Response | Descripción |
-|-----|---------|----------|-------------|
-| `ActivateJobs` | `ActivateJobsRequest` | stream `ActivateJobsResponse` | Activar jobs (server streaming) |
-| `StreamActivatedJobs` | `StreamActivatedJobsRequest` | stream `ActivatedJob` | Stream bidireccional |
-| `CompleteJob` | `CompleteJobRequest` | `CompleteJobResponse` | Completar job |
-| `FailJob` | `FailJobRequest` | `FailJobResponse` | Fallar job |
-| `ThrowError` | `ThrowErrorRequest` | `ThrowErrorResponse` | Lanzar error BPMN |
-| `UpdateJobRetries` | `UpdateJobRetriesRequest` | `UpdateJobRetriesResponse` | Actualizar retries |
-| `UpdateJobTimeout` | `UpdateJobTimeoutRequest` | `UpdateJobTimeoutResponse` | Actualizar timeout |
+
+|          RPC          |           Request            |           Response            |           Descripción           |
+|-----------------------|------------------------------|-------------------------------|---------------------------------|
+| `ActivateJobs`        | `ActivateJobsRequest`        | stream `ActivateJobsResponse` | Activar jobs (server streaming) |
+| `StreamActivatedJobs` | `StreamActivatedJobsRequest` | stream `ActivatedJob`         | Stream bidireccional            |
+| `CompleteJob`         | `CompleteJobRequest`         | `CompleteJobResponse`         | Completar job                   |
+| `FailJob`             | `FailJobRequest`             | `FailJobResponse`             | Fallar job                      |
+| `ThrowError`          | `ThrowErrorRequest`          | `ThrowErrorResponse`          | Lanzar error BPMN               |
+| `UpdateJobRetries`    | `UpdateJobRetriesRequest`    | `UpdateJobRetriesResponse`    | Actualizar retries              |
+| `UpdateJobTimeout`    | `UpdateJobTimeoutRequest`    | `UpdateJobTimeoutResponse`    | Actualizar timeout              |
 
 ### Otras Operaciones
-| RPC | Request | Response | Descripción |
-|-----|---------|----------|-------------|
-| `SetVariables` | `SetVariablesRequest` | `SetVariablesResponse` | Set variables en scope |
-| `ResolveIncident` | `ResolveIncidentRequest` | `ResolveIncidentResponse` | Resolver incidente |
-| `PublishMessage` | `PublishMessageRequest` | `PublishMessageResponse` | Publicar mensaje |
-| `BroadcastSignal` | `BroadcastSignalRequest` | `BroadcastSignalResponse` | Broadcast señal |
-| `EvaluateDecision` | `EvaluateDecisionRequest` | `EvaluateDecisionResponse` | Evaluar DMN |
-| `DeleteResource` | `DeleteResourceRequest` | `DeleteResourceResponse` | Borrar recurso |
-| `Topology` | `TopologyRequest` | `TopologyResponse` | Info del cluster |
+
+|        RPC         |          Request          |          Response          |      Descripción       |
+|--------------------|---------------------------|----------------------------|------------------------|
+| `SetVariables`     | `SetVariablesRequest`     | `SetVariablesResponse`     | Set variables en scope |
+| `ResolveIncident`  | `ResolveIncidentRequest`  | `ResolveIncidentResponse`  | Resolver incidente     |
+| `PublishMessage`   | `PublishMessageRequest`   | `PublishMessageResponse`   | Publicar mensaje       |
+| `BroadcastSignal`  | `BroadcastSignalRequest`  | `BroadcastSignalResponse`  | Broadcast señal        |
+| `EvaluateDecision` | `EvaluateDecisionRequest` | `EvaluateDecisionResponse` | Evaluar DMN            |
+| `DeleteResource`   | `DeleteResourceRequest`   | `DeleteResourceResponse`   | Borrar recurso         |
+| `Topology`         | `TopologyRequest`         | `TopologyResponse`         | Info del cluster       |
 
 ## Mensajes Protobuf Clave
 
 ### ActivateJobsRequest
+
 ```protobuf
 message ActivateJobsRequest {
     string type = 1;                    // Tipo de job (ej: "payment")
@@ -101,6 +105,7 @@ message ActivateJobsRequest {
 ```
 
 ### ActivatedJob
+
 ```protobuf
 message ActivatedJob {
     int64 key = 1;                     // Job key
@@ -121,6 +126,7 @@ message ActivatedJob {
 ```
 
 ### CreateProcessInstanceRequest
+
 ```protobuf
 message CreateProcessInstanceRequest {
     int64 processDefinitionKey = 1;    // Key del proceso (o usar bpmnProcessId)
@@ -139,15 +145,17 @@ Definida en `zeebe/gateway-protocol/src/main/proto/rest-api.yaml` (OpenAPI 3.0.3
 **Base URL**: `{schema}://{host}:{port}/v1`
 
 ### Endpoints REST
-| Método | Path | Descripción |
-|--------|------|-------------|
-| `GET` | `/v1/topology` | Info del cluster |
-| `PATCH` | `/v1/user-tasks/{userTaskKey}/completion` | Completar user task |
-| `PATCH` | `/v1/user-tasks/{userTaskKey}/assignment` | Asignar user task |
-| `PATCH` | `/v1/user-tasks/{userTaskKey}` | Actualizar user task |
-| `DELETE` | `/v1/user-tasks/{userTaskKey}/assignee` | Desasignar user task |
+
+|  Método  |                   Path                    |     Descripción      |
+|----------|-------------------------------------------|----------------------|
+| `GET`    | `/v1/topology`                            | Info del cluster     |
+| `PATCH`  | `/v1/user-tasks/{userTaskKey}/completion` | Completar user task  |
+| `PATCH`  | `/v1/user-tasks/{userTaskKey}/assignment` | Asignar user task    |
+| `PATCH`  | `/v1/user-tasks/{userTaskKey}`            | Actualizar user task |
+| `DELETE` | `/v1/user-tasks/{userTaskKey}/assignee`   | Desasignar user task |
 
 ### Controllers REST
+
 ```
 TopologyController      → GET /topology
 UserTaskController      → Operaciones de user tasks
@@ -159,6 +167,7 @@ ZeebeRestController     → Operaciones generales
 ## Flujo de una Petición
 
 ### gRPC
+
 ```
 1. Cliente envía ActivateJobsRequest via gRPC
 2. Interceptors procesan: auth, metrics, tenant
@@ -175,6 +184,7 @@ ZeebeRestController     → Operaciones generales
 ```
 
 ### REST
+
 ```
 1. Cliente envía HTTP request
 2. Spring Controller recibe
@@ -187,6 +197,7 @@ ZeebeRestController     → Operaciones generales
 ## Interceptors
 
 ### IdentityInterceptor (Autenticación)
+
 ```java
 // 1. Extrae token Bearer del header Authorization
 // 2. Valida token con Identity service
@@ -195,14 +206,17 @@ ZeebeRestController     → Operaciones generales
 ```
 
 ### MetricCollectingServerInterceptor
+
 Registra métricas de cada llamada gRPC (latencia, errores, throughput).
 
 ### ContextInjectingInterceptor
+
 Inyecta contexto adicional en las llamadas (tenant, auth info).
 
 ## Job Activation Strategies
 
 ### Long Polling (Default)
+
 ```
 1. Worker pide N jobs con requestTimeout=30s
 2. Si hay jobs disponibles → devolver inmediato
@@ -214,6 +228,7 @@ Inyecta contexto adicional en las llamadas (tenant, auth info).
 Más eficiente: menos requests al broker.
 
 ### Round Robin
+
 ```
 1. Worker pide N jobs
 2. Gateway envía request a cada partición en round-robin
@@ -222,6 +237,7 @@ Más eficiente: menos requests al broker.
 ```
 
 ### Job Streaming (Moderno)
+
 ```
 1. Worker abre StreamActivatedJobs (bidireccional)
 2. Gateway registra con ClientStreamer
@@ -250,3 +266,4 @@ GatewayCfg {
 - Cada gateway conoce la topología del cluster
 - Rutea al broker correcto según la partición del record
 - Load balancing entre gateways via DNS/LB externo
+

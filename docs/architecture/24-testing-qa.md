@@ -63,14 +63,14 @@ TestUtil.waitUntil(() -> recordingExporter.getCount() > 5);
 
 ### JUnit Extensions
 
-| Extension | Propósito |
-|-----------|----------|
-| `AutoCloseResources` + `@AutoCloseResource` | Cleanup declarativo de recursos |
-| `AutoCloseResourceExtension` | JUnit 5 extension para auto-close |
-| `CachedTestResultsExtension` | Cachear resultados de tests |
-| `JMHTestExtension` + `@JMHTest` | Micro-benchmarks JMH |
-| `@RegressionTest` | Marcar tests de regresión |
-| `@StraceTest` | Tests con strace del sistema |
+|                  Extension                  |             Propósito             |
+|---------------------------------------------|-----------------------------------|
+| `AutoCloseResources` + `@AutoCloseResource` | Cleanup declarativo de recursos   |
+| `AutoCloseResourceExtension`                | JUnit 5 extension para auto-close |
+| `CachedTestResultsExtension`                | Cachear resultados de tests       |
+| `JMHTestExtension` + `@JMHTest`             | Micro-benchmarks JMH              |
+| `@RegressionTest`                           | Marcar tests de regresión         |
+| `@StraceTest`                               | Tests con strace del sistema      |
 
 ### Logging de Records
 
@@ -199,13 +199,13 @@ class MyIntegrationTest {
 
 ### Clases de infraestructura
 
-| Clase | Propósito |
-|-------|----------|
-| `TestZeebe` | Nodo Zeebe de test completo |
-| `TestGateway` | Gateway de test |
-| `TestStandaloneBroker` | Broker standalone de test |
-| `ClusterActuatorAssert` | Assertions para actuator del cluster |
-| `JobStreamActuatorAssert` | Assertions para job streaming |
+|           Clase           |              Propósito               |
+|---------------------------|--------------------------------------|
+| `TestZeebe`               | Nodo Zeebe de test completo          |
+| `TestGateway`             | Gateway de test                      |
+| `TestStandaloneBroker`    | Broker standalone de test            |
+| `ClusterActuatorAssert`   | Assertions para actuator del cluster |
+| `JobStreamActuatorAssert` | Assertions para job streaming        |
 
 ## qa/integration-tests: Suite de Integración
 
@@ -337,3 +337,4 @@ mvn install -DskipChecks           # Salta quality checks + tests
 │  Mocks, AssertJ, ArchUnit                  │  Sin I/O real
 └─────────────────────────────────────────────┘
 ```
+

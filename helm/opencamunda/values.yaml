@@ -1,0 +1,230 @@
+# OpenCamunda Helm Chart - Default Values
+# Zeebe Community Fork v8.5.25
+#
+# IMPORTANT: Before installing, you must build and push the Docker image:
+#
+#   docker build -t ghcr.io/<your-github-user>/opencamunda/zeebe:8.5.25 .
+#   docker push ghcr.io/<your-github-user>/opencamunda/zeebe:8.5.25
+#
+# Then install with:
+#   helm install opencamunda ./helm/opencamunda \
+#     --set zeebe.image.registry=ghcr.io \
+#     --set zeebe.image.repository=<your-github-user>/opencamunda/zeebe
+#
+# Or for local dev (kind/minikube), build locally and set pullPolicy=Never:
+#   helm install opencamunda ./helm/opencamunda --set zeebe.image.pullPolicy=Never
+
+# -- Global settings
+global:
+  # -- Common labels applied to all resources
+  labels:
+    app: opencamunda
+
+# =============================================================================
+# Zeebe Broker Configuration
+# =============================================================================
+zeebe:
+  # -- Number of broker replicas (= cluster size)
+  clusterSize: 1
+  # -- Number of partitions
+  partitionCount: 1
+  # -- Replication factor (must be <= clusterSize)
+  replicationFactor: 1
+
+  image:
+    # -- Image registry (e.g. ghcr.io, docker.io, your-private-registry.com)
+    # Leave empty if repository already contains the full path
+    registry: ""
+    # -- Image repository. This image must be built from this repo's Dockerfile.
+    # Examples:
+    #   ghcr.io/jorge/opencamunda/zeebe  (GitHub Container Registry)
+    #   docker.io/opencamunda/zeebe       (Docker Hub)
+    #   localhost:5000/opencamunda/zeebe  (local registry)
+    repository: opencamunda/zeebe
+    # -- Image tag (defaults to Chart appVersion = 8.5.25)
+    tag: ""
+    # -- Image pull policy. Set to "Never" for local dev with kind/minikube
+    pullPolicy: IfNotPresent
+    # -- Image pull secrets for private registries
+    pullSecrets: []
+
+  # -- Enable embedded gateway in broker
+  embeddedGateway: true
+
+  # -- Java options for the broker
+  javaOpts: >-
+    -XX:+ExitOnOutOfMemoryError
+    -XX:+HeapDumpOnOutOfMemoryError
+    -XX:HeapDumpPath=/usr/local/zeebe/data
+    -XX:ErrorFile=/usr/local/zeebe/data/zeebe_error%p.log
+
+  # -- Log level for the broker
+  logLevel: info
+
+  # -- Extra environment variables
+  env: []
+
+  # -- Resource requests and limits
+  resources:
+    requests:
+      cpu: 800m
+      memory: 1200Mi
+    limits:
+      cpu: 960m
+      memory: 1920Mi
+
+  # -- Persistent volume claim size
+  pvcSize: 10Gi
+  # -- Storage class (empty = default)
+  pvcStorageClassName: ""
+  # -- Access modes for PVC
+  pvcAccessModes:
+    - ReadWriteOnce
+
+  service:
+    # -- Service type
+    type: ClusterIP
+    # -- HTTP/actuator port
+    httpPort: 9600
+    # -- gRPC gateway port
+    gatewayPort: 26500
+    # -- Command API port
+    commandPort: 26501
+    # -- Internal cluster port
+    internalPort: 26502
+
+  # -- Pod annotations
+  podAnnotations: {}
+
+  # -- Node selector
+  nodeSelector: {}
+  # -- Tolerations
+  tolerations: []
+  # -- Affinity rules
+  affinity: {}
+
+  readinessProbe:
+    enabled: true
+    probePath: /actuator/health/readiness
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    failureThreshold: 5
+    timeoutSeconds: 1
+
+  livenessProbe:
+    enabled: false
+    probePath: /actuator/health/readiness
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    failureThreshold: 5
+    timeoutSeconds: 1
+
+  # -- Zeebe application.yaml override (if specified, used as-is)
+  configuration: ""
+
+  # -- Extra configuration files
+  extraConfiguration: {}
+
+  # -- Extra volumes
+  extraVolumes: []
+  # -- Extra volume mounts
+  extraVolumeMounts: []
+
+# =============================================================================
+# Standalone Gateway Configuration (when embeddedGateway is disabled)
+# =============================================================================
+zeebeGateway:
+  # -- Enable standalone gateway (only needed if zeebe.embeddedGateway is false)
+  enabled: false
+  # -- Number of replicas
+  replicas: 1
+
+  image:
+    registry: ""
+    repository: opencamunda/zeebe
+    tag: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+
+  javaOpts: >-
+    -XX:+ExitOnOutOfMemoryError
+
+  logLevel: info
+  env: []
+
+  resources:
+    requests:
+      cpu: 400m
+      memory: 450Mi
+    limits:
+      cpu: 400m
+      memory: 450Mi
+
+  service:
+    type: ClusterIP
+    httpPort: 9600
+    grpcPort: 26500
+    restPort: 8080
+    internalPort: 26502
+
+  readinessProbe:
+    enabled: true
+    probePath: /actuator/health/readiness
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    failureThreshold: 5
+    timeoutSeconds: 1
+
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# =============================================================================
+# Elasticsearch Configuration
+# =============================================================================
+elasticsearch:
+  # -- Enable bundled Elasticsearch
+  enabled: true
+  # -- Elasticsearch URL (used if enabled=false for external ES)
+  url: "http://{{ .Release.Name }}-elasticsearch:9200"
+  image:
+    repository: docker.elastic.co/elasticsearch/elasticsearch
+    tag: "8.9.2"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: 1
+      memory: 2Gi
+    limits:
+      cpu: 2
+      memory: 2Gi
+  # -- Persistent volume claim size
+  pvcSize: 30Gi
+  pvcStorageClassName: ""
+  # -- JVM heap size
+  heapSize: 1024m
+
+# =============================================================================
+# Exporter Configuration
+# =============================================================================
+exporter:
+  elasticsearch:
+    # -- Enable Elasticsearch exporter
+    enabled: true
+    # -- Elasticsearch URL override (defaults to elasticsearch.url)
+    url: ""
+
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+ingress:
+  # -- Enable ingress for the gateway REST/gRPC
+  enabled: false
+  className: nginx
+  annotations: {}
+  host: ""
+  tls:
+    enabled: false
+    secretName: ""

@@ -3,12 +3,14 @@
 ## Setup Inicial
 
 ### Requisitos
+
 - **JDK 21** (Eclipse Temurin recomendado)
 - **Maven 3.x** (incluido como wrapper `./mvnw`)
 - **Docker** (para tests de integración con Testcontainers)
 - **Git** con commit-lint configurado
 
 ### Primera compilación
+
 ```bash
 git clone <repo>
 cd opencamunda
@@ -16,6 +18,7 @@ mvn clean install -Dquickly    # Build rápido inicial
 ```
 
 ### IDE Recomendado
+
 - **IntelliJ IDEA** o **VS Code** con extensiones Java
 - Importar como proyecto Maven
 - Configurar Java 21 como SDK del proyecto
@@ -24,6 +27,7 @@ mvn clean install -Dquickly    # Build rápido inicial
 ## Workflow Diario
 
 ### 1. Hacer cambios en un módulo
+
 ```bash
 # Compilar solo el módulo afectado y sus dependencias
 mvn clean install -pl zeebe/engine -am -DskipTests
@@ -33,6 +37,7 @@ mvn clean install -pl zeebe/protocol,zeebe/protocol-impl -am -DskipTests
 ```
 
 ### 2. Ejecutar tests
+
 ```bash
 # Tests unitarios de un módulo
 mvn test -pl zeebe/engine
@@ -45,11 +50,13 @@ mvn verify -pl zeebe/qa/integration-tests -DskipUTs
 ```
 
 ### 3. Formatear código antes de commit
+
 ```bash
 mvn spotless:apply
 ```
 
 ### 4. Verificar calidad
+
 ```bash
 mvn verify -pl zeebe/engine -DskipITs   # Tests + checks
 mvn checkstyle:check -pl zeebe/engine    # Solo checkstyle
@@ -85,6 +92,7 @@ zeebe/engine/
 ## Convenciones de Código
 
 ### Nombrado
+
 - **Packages**: `io.camunda.zeebe.<modulo>.<subdominio>`
 - **Processors**: `<Entity><Intent>Processor` (e.g., `JobCompleteProcessor`)
 - **State**: `Db<Entity>State` (e.g., `DbJobState`)
@@ -95,6 +103,7 @@ zeebe/engine/
 ### Patrones Recurrentes
 
 #### Command Pattern (Procesamiento de comandos)
+
 ```java
 // 1. TypedRecordProcessor procesa un comando
 public class JobCompleteProcessor implements TypedRecordProcessor<JobRecord> {
@@ -108,6 +117,7 @@ public class JobCompleteProcessor implements TypedRecordProcessor<JobRecord> {
 ```
 
 #### Either Pattern (Manejo de errores)
+
 ```java
 // No se usan excepciones para flujo normal, se usa Either<Failure, Result>
 return variableMappingBehavior
@@ -117,6 +127,7 @@ return variableMappingBehavior
 ```
 
 #### State Pattern (Acceso a estado)
+
 ```java
 // Siempre dentro de TransactionContext
 transactionContext.runInTransaction(() -> {
@@ -129,6 +140,7 @@ transactionContext.runInTransaction(() -> {
 ```
 
 #### Behavior Pattern (Lógica reutilizable)
+
 ```java
 // Los behaviors encapsulan lógica compartida entre processors
 // Se inyectan via BpmnBehaviors
@@ -140,25 +152,30 @@ private final BpmnEventSubscriptionBehavior eventSubscriptionBehavior;
 ## Cómo Encontrar Código
 
 ### "¿Dónde se procesa el comando X?"
+
 1. Identifica el `ValueType` (e.g., `JOB`)
 2. Identifica el `Intent` (e.g., `COMPLETE`)
 3. Busca en `*EventProcessors.java` el registro: `onCommand(ValueType.JOB, JobIntent.COMPLETE, ...)`
 4. Ahí está el procesador: `JobCompleteProcessor`
 
 ### "¿Dónde se aplica el evento X al estado?"
+
 1. Busca en `engine/state/appliers/` el applier correspondiente
 2. El `EventApplier` mapea `ValueType + Intent` → `TypedEventApplier`
 
 ### "¿Cómo se ejecuta el elemento BPMN Y?"
+
 1. Ve a `engine/processing/bpmn/`
 2. Busca el `BpmnElementProcessor` para ese tipo en `BpmnElementProcessors.java`
 3. El processor implementa `onActivate()`, `onComplete()`, `onTerminate()`
 
 ### "¿Qué column families usa la entidad Z?"
+
 1. Ve a `protocol/ZbColumnFamilies.java` → lista todas las CFs
 2. Ve a `engine/state/<dominio>/Db<Entity>State.java` → usa column families específicas
 
 ### "¿Cómo llega un request del cliente al engine?"
+
 ```
 Cliente → gRPC (gateway.proto)
        → GatewayGrpcService
@@ -173,16 +190,19 @@ Cliente → gRPC (gateway.proto)
 ## Depuración
 
 ### Logs
+
 - Framework: Log4j 2 + SLF4J
 - Loggers por clase: `private static final Logger LOG = LoggerFactory.getLogger(...)`
 - Cambiar nivel: configurar en `log4j2.xml` o vía propiedades de sistema
 
 ### Métricas
+
 - Framework: Micrometer
 - Cada módulo registra métricas propias
 - Dashboards Grafana en `monitor/grafana/`
 
 ### Tests de Integración
+
 - Usan **Testcontainers** para levantar Elasticsearch, Zeebe, etc.
 - El módulo `zeebe/qa/` contiene los tests end-to-end
 - `zeebe/test-util/` tiene utilidades para tests
@@ -233,3 +253,4 @@ docker run -p 26500:26500 -p 8080:8080 opencamunda
 # Perfilar build
 mvn install -DskipTests  # Ver tiempos en .profiler/
 ```
+

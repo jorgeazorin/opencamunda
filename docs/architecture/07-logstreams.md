@@ -233,23 +233,23 @@ while (batchReader.hasNext()) {
 
 ## Configuración
 
-| Parámetro | Default | Descripción |
-|-----------|---------|-------------|
+|     Parámetro     |       Default        |        Descripción         |
+|-------------------|----------------------|----------------------------|
 | `maxFragmentSize` | 64KB (block-aligned) | Tamaño máximo de fragmento |
-| Sequencer queue | 128 entries | Capacidad del buffer |
-| `partitionId` | requerido | ID de la partición |
-| `logName` | requerido | Nombre contextual |
-| `logStorage` | requerido | Storage subyacente |
+| Sequencer queue   | 128 entries          | Capacidad del buffer       |
+| `partitionId`     | requerido            | ID de la partición         |
+| `logName`         | requerido            | Nombre contextual          |
+| `logStorage`      | requerido            | Storage subyacente         |
 
 ## Métricas
 
-| Métrica | Componente | Qué mide |
-|---------|-----------|----------|
-| Batch length | Sequencer | Número de entries por batch |
-| Batch size | Sequencer | Bytes por batch |
-| Queue depth | Sequencer | Entries pendientes en cola |
-| Append latency | Appender | Tiempo de escritura |
-| Flow control | Appender | Presión de backpressure |
+|    Métrica     | Componente |          Qué mide           |
+|----------------|------------|-----------------------------|
+| Batch length   | Sequencer  | Número de entries por batch |
+| Batch size     | Sequencer  | Bytes por batch             |
+| Queue depth    | Sequencer  | Entries pendientes en cola  |
+| Append latency | Appender   | Tiempo de escritura         |
+| Flow control   | Appender   | Presión de backpressure     |
 
 ## Backpressure
 
@@ -266,3 +266,4 @@ Espacio disponible
   ↓
 StreamProcessor reintenta
 ```
+

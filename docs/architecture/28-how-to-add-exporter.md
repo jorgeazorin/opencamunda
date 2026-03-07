@@ -17,12 +17,12 @@ Engine → LogStream → ExporterDirector → [Exporter1, Exporter2, ...]
 
 ## Archivos a Crear/Modificar
 
-| # | Archivo | Módulo |
-|---|---------|--------|
-| 1 | `MyExporter.java` | tu módulo o exporter existente |
+| # |            Archivo             |             Módulo             |
+|---|--------------------------------|--------------------------------|
+| 1 | `MyExporter.java`              | tu módulo o exporter existente |
 | 2 | `MyExporterConfiguration.java` | (opcional) configuración typed |
-| 3 | Configuración YAML | broker config |
-| 4 | `pom.xml` | (si módulo separado) |
+| 3 | Configuración YAML             | broker config                  |
+| 4 | `pom.xml`                      | (si módulo separado)           |
 
 ## Paso 1: Implementar la Interfaz Exporter
 
@@ -355,3 +355,4 @@ public void export(final Record<?> record) {
 - [ ] Configuración YAML en broker
 - [ ] Tests unitarios con records mockeados
 - [ ] Test de integración con `RecordingExporter`
+

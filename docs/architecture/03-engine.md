@@ -189,41 +189,45 @@ public interface BpmnElementProcessor<T extends ExecutableFlowElement> {
 `BpmnElementProcessors` mapea cada `BpmnElementType` a su procesador:
 
 ### Tasks (Tareas)
-| Tipo | Procesador | Qué hace |
-|------|-----------|----------|
-| `SERVICE_TASK` | `JobWorkerTaskProcessor` | Crea job, espera worker |
-| `USER_TASK` | `UserTaskProcessor` | Crea user task |
-| `BUSINESS_RULE_TASK` | `BusinessRuleTaskProcessor` | Evalúa DMN o crea job |
-| `SCRIPT_TASK` | `ScriptTaskProcessor` | Evalúa FEEL o crea job |
-| `SEND_TASK` | `SendTaskProcessor` | Publica mensaje o crea job |
-| `RECEIVE_TASK` | `ReceiveTaskProcessor` | Espera mensaje |
-| `MANUAL_TASK` | `ManualTaskProcessor` | Se completa automáticamente |
+
+|         Tipo         |         Procesador          |          Qué hace           |
+|----------------------|-----------------------------|-----------------------------|
+| `SERVICE_TASK`       | `JobWorkerTaskProcessor`    | Crea job, espera worker     |
+| `USER_TASK`          | `UserTaskProcessor`         | Crea user task              |
+| `BUSINESS_RULE_TASK` | `BusinessRuleTaskProcessor` | Evalúa DMN o crea job       |
+| `SCRIPT_TASK`        | `ScriptTaskProcessor`       | Evalúa FEEL o crea job      |
+| `SEND_TASK`          | `SendTaskProcessor`         | Publica mensaje o crea job  |
+| `RECEIVE_TASK`       | `ReceiveTaskProcessor`      | Espera mensaje              |
+| `MANUAL_TASK`        | `ManualTaskProcessor`       | Se completa automáticamente |
 
 ### Gateways
-| Tipo | Procesador | Qué hace |
-|------|-----------|----------|
-| `EXCLUSIVE_GATEWAY` | `ExclusiveGatewayProcessor` | Evalúa condiciones, toma una ruta |
-| `PARALLEL_GATEWAY` | `ParallelGatewayProcessor` | Fork/Join de flujos paralelos |
-| `INCLUSIVE_GATEWAY` | `InclusiveGatewayProcessor` | Fork/Join inclusivo |
-| `EVENT_BASED_GATEWAY` | `EventBasedGatewayProcessor` | Espera primer evento |
+
+|         Tipo          |          Procesador          |             Qué hace              |
+|-----------------------|------------------------------|-----------------------------------|
+| `EXCLUSIVE_GATEWAY`   | `ExclusiveGatewayProcessor`  | Evalúa condiciones, toma una ruta |
+| `PARALLEL_GATEWAY`    | `ParallelGatewayProcessor`   | Fork/Join de flujos paralelos     |
+| `INCLUSIVE_GATEWAY`   | `InclusiveGatewayProcessor`  | Fork/Join inclusivo               |
+| `EVENT_BASED_GATEWAY` | `EventBasedGatewayProcessor` | Espera primer evento              |
 
 ### Events
-| Tipo | Procesador | Qué hace |
-|------|-----------|----------|
-| `START_EVENT` | `StartEventProcessor` | Inicia el proceso |
-| `END_EVENT` | `EndEventProcessor` | Termina el flujo |
-| `INTERMEDIATE_CATCH_EVENT` | `IntermediateCatchEventProcessor` | Espera evento |
-| `INTERMEDIATE_THROW_EVENT` | `IntermediateThrowEventProcessor` | Lanza evento |
-| `BOUNDARY_EVENT` | `BoundaryEventProcessor` | Evento en borde de tarea |
+
+|            Tipo            |            Procesador             |         Qué hace         |
+|----------------------------|-----------------------------------|--------------------------|
+| `START_EVENT`              | `StartEventProcessor`             | Inicia el proceso        |
+| `END_EVENT`                | `EndEventProcessor`               | Termina el flujo         |
+| `INTERMEDIATE_CATCH_EVENT` | `IntermediateCatchEventProcessor` | Espera evento            |
+| `INTERMEDIATE_THROW_EVENT` | `IntermediateThrowEventProcessor` | Lanza evento             |
+| `BOUNDARY_EVENT`           | `BoundaryEventProcessor`          | Evento en borde de tarea |
 
 ### Containers (SubProcesos)
-| Tipo | Procesador | Qué hace |
-|------|-----------|----------|
-| `PROCESS` | `ProcessProcessor` | Proceso raíz |
-| `SUB_PROCESS` | `SubProcessProcessor` | Subproceso embedded |
-| `EVENT_SUB_PROCESS` | `EventSubProcessProcessor` | Subproceso por evento |
-| `MULTI_INSTANCE_BODY` | `MultiInstanceBodyProcessor` | Loop multi-instancia |
-| `CALL_ACTIVITY` | `CallActivityProcessor` | Llama otro proceso |
+
+|         Tipo          |          Procesador          |       Qué hace        |
+|-----------------------|------------------------------|-----------------------|
+| `PROCESS`             | `ProcessProcessor`           | Proceso raíz          |
+| `SUB_PROCESS`         | `SubProcessProcessor`        | Subproceso embedded   |
+| `EVENT_SUB_PROCESS`   | `EventSubProcessProcessor`   | Subproceso por evento |
+| `MULTI_INSTANCE_BODY` | `MultiInstanceBodyProcessor` | Loop multi-instancia  |
+| `CALL_ACTIVITY`       | `CallActivityProcessor`      | Llama otro proceso    |
 
 ## Ejemplo: Ciclo de Vida de un Service Task
 
@@ -292,6 +296,7 @@ BpmnBehaviors (interfaz contenedora de todos los behaviors)
 ## Procesadores de Otros Dominios (No-BPMN)
 
 ### Jobs (`processing/job/`)
+
 ```
 JobBatchActivateProcessor   → Activar batch de jobs (del worker)
 JobCompleteProcessor        → Worker completa job
@@ -306,12 +311,14 @@ JobRecurProcessor           → Reintentar tras backoff
 ```
 
 ### Deployment (`processing/deployment/`)
+
 ```
 DeploymentCreateProcessor        → Desplegar recursos (BPMN, DMN, Forms)
 DeploymentDistributeProcessor    → Distribuir deploy a otras particiones
 ```
 
 ### Messages (`processing/message/`)
+
 ```
 MessagePublishProcessor              → Publicar mensaje
 MessageCorrelateProcessor            → Correlacionar mensaje con proceso
@@ -320,17 +327,20 @@ ProcessMessageSubscriptionCorrelate  → Correlación en suscripciones
 ```
 
 ### Timers (`processing/timer/`)
+
 ```
 TimerTriggerProcessor       → Timer se dispara
 TimerCancelProcessor        → Cancelar timer
 ```
 
 ### Incidents (`processing/incident/`)
+
 ```
 IncidentResolveProcessor    → Resolver incidente y reintentar
 ```
 
 ### Process Instance (`processing/processinstance/`)
+
 ```
 ProcessInstanceCreationCreateProcessor  → Crear instancia de proceso
 ProcessInstanceCancelProcessor          → Cancelar instancia
@@ -359,6 +369,7 @@ return variableMappingBehavior.applyInputMappings(context, element)
 ```
 
 ### Instancias Baneadas
+
 Si una instancia de proceso causa errores repetidos, se **banea**:
 - `BannedInstanceState` marca la instancia
 - El engine rechaza todos los comandos para esa instancia
@@ -397,16 +408,17 @@ Cada applier actualiza las column families correspondientes en RocksDB.
 
 ## Cómo Encontrar el Código de una Funcionalidad
 
-| Quiero entender... | Buscar en... |
-|---------------------|-------------|
-| Cómo se ejecuta un Service Task | `processing/bpmn/task/JobWorkerTaskProcessor` |
-| Cómo se crea un job | `processing/bpmn/behavior/BpmnJobBehavior` |
-| Cómo se activan jobs para workers | `processing/job/JobBatchActivateProcessor` |
-| Cómo se despliega un proceso | `processing/deployment/DeploymentCreateProcessor` |
-| Cómo se crea una instancia | `processing/processinstance/ProcessInstanceCreationCreateProcessor` |
-| Cómo se correlaciona un mensaje | `processing/message/MessageCorrelateProcessor` |
-| Cómo se evalúa una expresión FEEL | La usa `BpmnVariableMappingBehavior` → delega a `ExpressionLanguage` |
-| Cómo se ejecuta una decisión DMN | `processing/dmn/` → usa `DecisionEngine` |
-| Cómo se maneja un timer | `processing/timer/TimerTriggerProcessor` |
-| Cómo se resuelve un incidente | `processing/incident/IncidentResolveProcessor` |
-| Cómo se actualiza el estado de un job | `state/appliers/Job*Applier` → modifica `DbJobState` |
+|          Quiero entender...           |                             Buscar en...                             |
+|---------------------------------------|----------------------------------------------------------------------|
+| Cómo se ejecuta un Service Task       | `processing/bpmn/task/JobWorkerTaskProcessor`                        |
+| Cómo se crea un job                   | `processing/bpmn/behavior/BpmnJobBehavior`                           |
+| Cómo se activan jobs para workers     | `processing/job/JobBatchActivateProcessor`                           |
+| Cómo se despliega un proceso          | `processing/deployment/DeploymentCreateProcessor`                    |
+| Cómo se crea una instancia            | `processing/processinstance/ProcessInstanceCreationCreateProcessor`  |
+| Cómo se correlaciona un mensaje       | `processing/message/MessageCorrelateProcessor`                       |
+| Cómo se evalúa una expresión FEEL     | La usa `BpmnVariableMappingBehavior` → delega a `ExpressionLanguage` |
+| Cómo se ejecuta una decisión DMN      | `processing/dmn/` → usa `DecisionEngine`                             |
+| Cómo se maneja un timer               | `processing/timer/TimerTriggerProcessor`                             |
+| Cómo se resuelve un incidente         | `processing/incident/IncidentResolveProcessor`                       |
+| Cómo se actualiza el estado de un job | `state/appliers/Job*Applier` → modifica `DbJobState`                 |
+

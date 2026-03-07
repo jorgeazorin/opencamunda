@@ -32,27 +32,27 @@ defer client.Close()
 
 ### Comandos Disponibles (~25)
 
-| Categoría | Comando | Método |
-|-----------|---------|--------|
-| **Deploy** | Deploy resource | `client.NewDeployResourceCommand()` |
-| **Procesos** | Create instance | `client.NewCreateInstanceCommand()` |
-| | Create with result | `client.NewCreateInstanceCommand()...WithResult()` |
-| | Cancel instance | `client.NewCancelInstanceCommand()` |
-| | Set variables | `client.NewSetVariablesCommand()` |
-| | Modify instance | `client.NewModifyProcessInstanceCommand()` |
-| | Migrate instance | `client.NewMigrateProcessInstanceCommand()` |
-| **Jobs** | Activate jobs | `client.NewActivateJobsCommand()` |
-| | Complete job | `client.NewCompleteJobCommand()` |
-| | Fail job | `client.NewFailJobCommand()` |
-| | Throw error | `client.NewThrowErrorCommand()` |
-| | Update retries | `client.NewUpdateJobRetriesCommand()` |
-| | Update timeout | `client.NewUpdateJobTimeoutCommand()` |
-| **Mensajes** | Publish message | `client.NewPublishMessageCommand()` |
-| | Broadcast signal | `client.NewBroadcastSignalCommand()` |
-| **Decisiones** | Evaluate decision | `client.NewEvaluateDecisionCommand()` |
-| **Recursos** | Delete resource | `client.NewDeleteResourceCommand()` |
-| **Incidentes** | Resolve incident | `client.NewResolveIncidentCommand()` |
-| **Cluster** | Topology | `client.NewTopologyCommand()` |
+|   Categoría    |      Comando       |                       Método                       |
+|----------------|--------------------|----------------------------------------------------|
+| **Deploy**     | Deploy resource    | `client.NewDeployResourceCommand()`                |
+| **Procesos**   | Create instance    | `client.NewCreateInstanceCommand()`                |
+|                | Create with result | `client.NewCreateInstanceCommand()...WithResult()` |
+|                | Cancel instance    | `client.NewCancelInstanceCommand()`                |
+|                | Set variables      | `client.NewSetVariablesCommand()`                  |
+|                | Modify instance    | `client.NewModifyProcessInstanceCommand()`         |
+|                | Migrate instance   | `client.NewMigrateProcessInstanceCommand()`        |
+| **Jobs**       | Activate jobs      | `client.NewActivateJobsCommand()`                  |
+|                | Complete job       | `client.NewCompleteJobCommand()`                   |
+|                | Fail job           | `client.NewFailJobCommand()`                       |
+|                | Throw error        | `client.NewThrowErrorCommand()`                    |
+|                | Update retries     | `client.NewUpdateJobRetriesCommand()`              |
+|                | Update timeout     | `client.NewUpdateJobTimeoutCommand()`              |
+| **Mensajes**   | Publish message    | `client.NewPublishMessageCommand()`                |
+|                | Broadcast signal   | `client.NewBroadcastSignalCommand()`               |
+| **Decisiones** | Evaluate decision  | `client.NewEvaluateDecisionCommand()`              |
+| **Recursos**   | Delete resource    | `client.NewDeleteResourceCommand()`                |
+| **Incidentes** | Resolve incident   | `client.NewResolveIncidentCommand()`               |
+| **Cluster**    | Topology           | `client.NewTopologyCommand()`                      |
 
 ### Ejemplo: Deploy y Crear Instancia
 
@@ -122,13 +122,13 @@ func handlePayment(client worker.JobClient, job entities.Job) {
 
 ### Defaults del Worker
 
-| Parámetro | Default | Descripción |
-|-----------|---------|-------------|
-| `MaxJobsActive` | 32 | Jobs activos máximos |
-| `Concurrency` | 4 | Goroutines paralelas |
-| `PollInterval` | 100ms | Intervalo de polling |
-| `Threshold` | 0.3 | Poll cuando 30% libre |
-| `StreamEnabled` | false | Usar streaming |
+|    Parámetro    | Default |      Descripción      |
+|-----------------|---------|-----------------------|
+| `MaxJobsActive` | 32      | Jobs activos máximos  |
+| `Concurrency`   | 4       | Goroutines paralelas  |
+| `PollInterval`  | 100ms   | Intervalo de polling  |
+| `Threshold`     | 0.3     | Poll cuando 30% libre |
+| `StreamEnabled` | false   | Usar streaming        |
 
 ## zbctl: CLI Tool
 
@@ -184,3 +184,4 @@ zbctl status \
 zbctl status
 # Muestra: cluster size, partitions, leaders, broker versions
 ```
+

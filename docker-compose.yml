@@ -1,0 +1,143 @@
+# OpenCamunda - Docker Compose for local development and production-like deployment
+# Usage:
+#   Build image:    docker compose build
+#   Start all:      docker compose up -d
+#   Start minimal:  docker compose up -d zeebe elasticsearch
+#   Logs:           docker compose logs -f zeebe
+#   Stop:           docker compose down
+#   Clean:          docker compose down -v
+
+services:
+  # =============================================================================
+  # Zeebe Broker (with embedded gateway)
+  # =============================================================================
+  zeebe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DIST: distball
+    image: opencamunda/zeebe:8.5.25
+    container_name: opencamunda-zeebe
+    ports:
+      - "26500:26500"  # gRPC Gateway
+      - "8080:8080"    # REST API + Actuator
+      - "26501:26501"  # Command API (broker-to-broker)
+      - "26502:26502"  # Internal API (broker-to-broker)
+    environment:
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_CLASSNAME=io.camunda.zeebe.exporter.ElasticsearchExporter
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_URL=http://elasticsearch:9200
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_BULK_SIZE=1
+      - ZEEBE_BROKER_GATEWAY_ENABLE=true
+      - ZEEBE_BROKER_NETWORK_HOST=0.0.0.0
+      - ZEEBE_BROKER_DATA_DISKUSAGECOMMANDWATERMARK=0.998
+      - ZEEBE_BROKER_DATA_DISKUSAGEREPLICATIONWATERMARK=0.999
+      - JAVA_TOOL_OPTIONS=-Xms512m -Xmx512m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health/readiness || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - zeebe-data:/usr/local/zeebe/data
+      - zeebe-logs:/usr/local/zeebe/logs
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - opencamunda
+
+  # =============================================================================
+  # Elasticsearch (required for exporters, Operate, Tasklist)
+  # =============================================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.2
+    container_name: opencamunda-elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - cluster.name=opencamunda
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health?wait_for_status=yellow || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    networks:
+      - opencamunda
+
+  # =============================================================================
+  # Kibana (optional - for Elasticsearch data exploration)
+  # =============================================================================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.2
+    container_name: opencamunda-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    networks:
+      - opencamunda
+
+  # =============================================================================
+  # Prometheus + Grafana (optional - for monitoring)
+  # =============================================================================
+  prometheus:
+    image: prom/prometheus:v2.37.9
+    container_name: opencamunda-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitor/prometheus/:/etc/prometheus/
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    networks:
+      - opencamunda
+
+  grafana:
+    image: grafana/grafana:9.5.21
+    container_name: opencamunda-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=opencamunda
+    volumes:
+      - ./monitor/grafana/dashboards/:/var/lib/grafana/dashboards/zeebe/
+      - ./monitor/grafana/provisioning/:/etc/grafana/provisioning/
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    networks:
+      - opencamunda
+
+volumes:
+  zeebe-data:
+  zeebe-logs:
+  elasticsearch-data:
+
+networks:
+  opencamunda:
+    driver: bridge

@@ -1,0 +1,151 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "opencamunda.zeebe.clusterName" . }}
+  labels:
+    {{- include "opencamunda.zeebe.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.zeebe.clusterSize }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: zeebe-broker
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  serviceName: {{ include "opencamunda.zeebe.clusterName" . }}
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        {{- include "opencamunda.zeebe.labels" . | nindent 8 }}
+      {{- with .Values.zeebe.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.zeebe.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 120
+      containers:
+        - name: zeebe
+          image: {{ include "opencamunda.zeebe.image" . }}
+          imagePullPolicy: {{ .Values.zeebe.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: LC_ALL
+              value: C.UTF-8
+            - name: K8S_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: ZEEBE_LOG_LEVEL
+              value: {{ .Values.zeebe.logLevel | quote }}
+            - name: ZEEBE_BROKER_CLUSTER_NODEID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.zeebe.javaOpts | quote }}
+            {{- range .Values.zeebe.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.zeebe.service.httpPort }}
+              name: http
+            - containerPort: {{ .Values.zeebe.service.commandPort }}
+              name: command
+            - containerPort: {{ .Values.zeebe.service.internalPort }}
+              name: internal
+            {{- if .Values.zeebe.embeddedGateway }}
+            - containerPort: {{ .Values.zeebe.service.gatewayPort }}
+              name: gateway
+            - containerPort: 8080
+              name: rest
+            {{- end }}
+          {{- if .Values.zeebe.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.zeebe.readinessProbe.probePath }}
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: {{ .Values.zeebe.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.zeebe.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.zeebe.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.zeebe.readinessProbe.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.zeebe.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.zeebe.livenessProbe.probePath }}
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: {{ .Values.zeebe.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.zeebe.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.zeebe.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.zeebe.livenessProbe.timeoutSeconds }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.zeebe.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /usr/local/zeebe/config/application.yaml
+              subPath: application.yaml
+            - name: data
+              mountPath: /usr/local/zeebe/data
+            - name: tmp
+              mountPath: /tmp
+            {{- with .Values.zeebe.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "opencamunda.zeebe.clusterName" . }}-config
+            defaultMode: 0754
+        - name: tmp
+          emptyDir: {}
+        {{- with .Values.zeebe.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.zeebe.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.zeebe.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.zeebe.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: {{ toYaml .Values.zeebe.pvcAccessModes | nindent 10 }}
+        {{- if .Values.zeebe.pvcStorageClassName }}
+        storageClassName: {{ .Values.zeebe.pvcStorageClassName | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.zeebe.pvcSize }}

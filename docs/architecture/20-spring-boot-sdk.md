@@ -168,13 +168,13 @@ public class CamundaAutoConfiguration {
 
 ### Beans Registrados
 
-| Bean | Propósito |
-|------|----------|
-| `ZeebeClient` | Cliente Zeebe configurado |
-| `JsonMapper` | Serialización Jackson |
-| `ZeebeLifecycleEventProducer` | Eventos de lifecycle |
-| `HealthIndicator` | Health check del cluster |
-| `MeterRegistry` | Métricas Micrometer |
+|             Bean              |         Propósito         |
+|-------------------------------|---------------------------|
+| `ZeebeClient`                 | Cliente Zeebe configurado |
+| `JsonMapper`                  | Serialización Jackson     |
+| `ZeebeLifecycleEventProducer` | Eventos de lifecycle      |
+| `HealthIndicator`             | Health check del cluster  |
+| `MeterRegistry`               | Métricas Micrometer       |
 
 ## Lifecycle con Spring
 
@@ -262,3 +262,4 @@ public class OrderWorkers {
     }
 }
 ```
+

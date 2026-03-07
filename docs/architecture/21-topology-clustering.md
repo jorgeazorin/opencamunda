@@ -174,14 +174,14 @@ interface TopologyChangeRequest {
 
 ### Appliers Disponibles
 
-| Applier | Operación | Transiciones |
-|---------|-----------|-------------|
-| `MemberJoinApplier` | Añadir nodo | → JOINING → ACTIVE |
-| `MemberLeaveApplier` | Quitar nodo | ACTIVE → LEAVING → removed |
-| `PartitionJoinApplier` | Añadir partición a nodo | → BOOTSTRAPPING → ACTIVE |
-| `PartitionLeaveApplier` | Quitar partición de nodo | ACTIVE → LEAVING → removed |
-| `PartitionReconfigurePriorityApplier` | Cambiar prioridad líder | Actualiza priority |
-| `PartitionForceReconfigureApplier` | Forzar reconfiguración | Ignora validaciones |
+|                Applier                |        Operación         |        Transiciones        |
+|---------------------------------------|--------------------------|----------------------------|
+| `MemberJoinApplier`                   | Añadir nodo              | → JOINING → ACTIVE         |
+| `MemberLeaveApplier`                  | Quitar nodo              | ACTIVE → LEAVING → removed |
+| `PartitionJoinApplier`                | Añadir partición a nodo  | → BOOTSTRAPPING → ACTIVE   |
+| `PartitionLeaveApplier`               | Quitar partición de nodo | ACTIVE → LEAVING → removed |
+| `PartitionReconfigurePriorityApplier` | Cambiar prioridad líder  | Actualiza priority         |
+| `PartitionForceReconfigureApplier`    | Forzar reconfiguración   | Ignora validaciones        |
 
 ## Escalado Dinámico
 
@@ -321,3 +321,4 @@ Cluster con 3 brokers, 3 particiones:
 │ lastChange: ScaleUp completed at v41        │
 └─────────────────────────────────────────────┘
 ```
+

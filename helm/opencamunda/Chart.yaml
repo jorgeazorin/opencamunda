@@ -1,0 +1,17 @@
+apiVersion: v2
+name: opencamunda
+description: OpenCamunda - Zeebe Community Fork (v8.5.25) Helm Chart
+type: application
+version: 0.1.0
+appVersion: "8.5.25"
+keywords:
+  - zeebe
+  - bpmn
+  - workflow
+  - orchestration
+  - camunda
+home: https://github.com/jorge/opencamunda
+sources:
+  - https://github.com/jorge/opencamunda
+maintainers:
+  - name: jorge

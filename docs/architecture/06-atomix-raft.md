@@ -34,6 +34,7 @@ zeebe/atomix/
 ## Componentes Core
 
 ### RaftServer (Punto de Entrada)
+
 ```java
 // Interface principal
 public interface RaftServer {
@@ -47,21 +48,23 @@ public interface RaftServer {
 ```
 
 ### RaftContext (Contenedor de Estado)
+
 El "cerebro" de cada nodo Raft. Mantiene todo el estado de la partición en un **single thread** (ThreadContext):
 
-| Campo | Tipo | Propósito |
-|-------|------|----------|
-| `role` | `volatile RaftRole` | Rol actual (Follower, Candidate, Leader) |
-| `leader` | `volatile MemberId` | Quién es el líder actual |
-| `term` | `volatile long` | Término actual de Raft |
-| `lastVotedFor` | `MemberId` | A quién votamos en este término |
-| `commitIndex` | `long` | Último índice committed |
-| `raftLog` | `RaftLog` | Log local |
-| `cluster` | `RaftClusterContext` | Miembros del cluster |
-| `meta` | `MetaStore` | Persiste term y voto (seguridad) |
-| `persistedSnapshotStore` | `ReceivableSnapshotStore` | Snapshots |
+|          Campo           |           Tipo            |                Propósito                 |
+|--------------------------|---------------------------|------------------------------------------|
+| `role`                   | `volatile RaftRole`       | Rol actual (Follower, Candidate, Leader) |
+| `leader`                 | `volatile MemberId`       | Quién es el líder actual                 |
+| `term`                   | `volatile long`           | Término actual de Raft                   |
+| `lastVotedFor`           | `MemberId`                | A quién votamos en este término          |
+| `commitIndex`            | `long`                    | Último índice committed                  |
+| `raftLog`                | `RaftLog`                 | Log local                                |
+| `cluster`                | `RaftClusterContext`      | Miembros del cluster                     |
+| `meta`                   | `MetaStore`               | Persiste term y voto (seguridad)         |
+| `persistedSnapshotStore` | `ReceivableSnapshotStore` | Snapshots                                |
 
 ### RaftLog
+
 ```java
 public class RaftLog {
     RaftLogReader openCommittedReader();     // Solo entries committed
@@ -85,18 +88,21 @@ INACTIVE
 ```
 
 ### FollowerRole
+
 - Mantiene un `ElectionTimer` que se resetea con cada heartbeat del líder
 - Si el timer expira → transiciona a `CandidateRole`
 - Procesa `AppendRequest` del líder (replicación de log)
 - Procesa `VoteRequest` de candidatos
 
 ### CandidateRole
+
 - Inicia elecciones enviando `VoteRequest` a todos los miembros
 - Si recibe mayoría de votos → `LeaderRole`
 - Si recibe heartbeat de nuevo líder → vuelve a `FollowerRole`
 - Timeout → reinicia elección con nuevo `votingRound`
 
 ### LeaderRole
+
 - Envía `AppendRequest` periódicos (heartbeat + replicación)
 - Usa `LeaderAppender` para gestionar replicación por follower
 - Trackea `matchIndex` por follower (hasta dónde han replicado)
@@ -131,9 +137,9 @@ INACTIVE
 
 ### Quorum de Votos
 
-| Tipo | Uso | Lógica |
-|------|-----|--------|
-| `SimpleVoteQuorum` | Normal | Requiere N/2+1 votos |
+|            Tipo            |       Uso       |                Lógica                 |
+|----------------------------|-----------------|---------------------------------------|
+| `SimpleVoteQuorum`         | Normal          | Requiere N/2+1 votos                  |
 | `JointConsensusVoteQuorum` | Reconfiguración | Requiere mayoría en OLD Y NEW members |
 
 ### Configuración de Elección
@@ -234,6 +240,7 @@ compact():
 ## Gestión de Particiones
 
 ### RaftPartition
+
 ```java
 public class RaftPartition {
     PartitionId partitionId;
@@ -314,6 +321,7 @@ public interface EntryValidator {
 ## Configuración Completa
 
 ### RaftPartitionConfig
+
 ```
 electionTimeout:               2500ms    ← Timeout de elección
 heartbeatInterval:             250ms     ← Intervalo de heartbeat
@@ -328,6 +336,7 @@ preferSnapshotReplicationThreshold: 100  ← Entries antes de snapshot
 ```
 
 ### RaftStorageConfig
+
 ```
 segmentSize:            32MB     ← Tamaño de segmento del journal
 freeDiskSpace:          1GB      ← Espacio libre mínimo
@@ -338,11 +347,13 @@ preallocateSegmentFiles: true    ← Pre-alocar archivos
 ## Persistencia y Seguridad
 
 ### MetaStore
+
 Persiste en disco (no volátil):
 - **term**: Término actual (sobrevive a reinicios)
 - **lastVotedFor**: A quién votó (evita votar dos veces)
 
 ### Threading
+
 - **Single-threaded por partición**: Todo el procesamiento Raft ocurre en un `ThreadContext`
 - **externalAccessLock**: Lock para acceso externo seguro (health checks, métricas)
 - **ActorControl**: Los componentes Zeebe acceden vía el scheduler de actores
@@ -376,3 +387,4 @@ Persiste en disco (no volátil):
    - Snapshot cuando log crece mucho
    - Compactación después de snapshot
 ```
+

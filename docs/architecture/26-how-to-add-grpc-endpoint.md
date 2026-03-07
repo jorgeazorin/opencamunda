@@ -6,20 +6,20 @@ Guía paso a paso para añadir una nueva operación gRPC al gateway de Zeebe. Us
 
 ## Archivos a Modificar/Crear
 
-| # | Archivo | Módulo |
-|---|---------|--------|
-| 1 | `gateway-protocol/src/main/proto/gateway.proto` | gateway-protocol |
-| 2 | `gateway/src/main/java/.../impl/broker/request/BrokerXxxRequest.java` | gateway |
-| 3 | `gateway/src/main/java/.../RequestMapper.java` | gateway |
-| 4 | `gateway/src/main/java/.../ResponseMapper.java` | gateway |
-| 5 | `gateway/src/main/java/.../EndpointManager.java` | gateway |
-| 6 | `gateway/src/main/java/.../GatewayGrpcService.java` | gateway |
-| 7 | `protocol/src/main/java/.../record/ValueType.java` | protocol (si nuevo ValueType) |
-| 8 | `protocol/src/main/java/.../record/intent/XxxIntent.java` | protocol (si nuevo Intent) |
-| 9 | `protocol-impl/src/main/java/.../record/value/XxxRecord.java` | protocol-impl |
-| 10 | `stream-platform/src/main/java/.../TypedEventRegistry.java` | stream-platform |
-| 11 | `engine/src/main/java/.../processing/EngineProcessors.java` | engine |
-| 12 | `engine/src/main/java/.../processing/xxx/XxxProcessor.java` | engine |
+| #  |                                Archivo                                |            Módulo             |
+|----|-----------------------------------------------------------------------|-------------------------------|
+| 1  | `gateway-protocol/src/main/proto/gateway.proto`                       | gateway-protocol              |
+| 2  | `gateway/src/main/java/.../impl/broker/request/BrokerXxxRequest.java` | gateway                       |
+| 3  | `gateway/src/main/java/.../RequestMapper.java`                        | gateway                       |
+| 4  | `gateway/src/main/java/.../ResponseMapper.java`                       | gateway                       |
+| 5  | `gateway/src/main/java/.../EndpointManager.java`                      | gateway                       |
+| 6  | `gateway/src/main/java/.../GatewayGrpcService.java`                   | gateway                       |
+| 7  | `protocol/src/main/java/.../record/ValueType.java`                    | protocol (si nuevo ValueType) |
+| 8  | `protocol/src/main/java/.../record/intent/XxxIntent.java`             | protocol (si nuevo Intent)    |
+| 9  | `protocol-impl/src/main/java/.../record/value/XxxRecord.java`         | protocol-impl                 |
+| 10 | `stream-platform/src/main/java/.../TypedEventRegistry.java`           | stream-platform               |
+| 11 | `engine/src/main/java/.../processing/EngineProcessors.java`           | engine                        |
+| 12 | `engine/src/main/java/.../processing/xxx/XxxProcessor.java`           | engine                        |
 
 ## Paso 1: Definir el Proto
 
@@ -327,10 +327,11 @@ Cliente gRPC ← MyNewOperationResponse
 - [ ] TypedEventRegistry actualizado
 - [ ] BrokerXxxRequest creado
 - [ ] RequestMapper método añadido
-- [ ] ResponseMapper método añadido  
+- [ ] ResponseMapper método añadido
 - [ ] EndpointManager método añadido
 - [ ] GatewayGrpcService override añadido
 - [ ] Engine Processor implementado
 - [ ] EngineProcessors registro añadido
 - [ ] CommandApiRequestReader actualizado
 - [ ] Tests escritos (gateway test + engine test)
+

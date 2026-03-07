@@ -18,14 +18,14 @@ Todo el estado del engine es reconstruible desde el log (event sourcing). El est
 
 ## Archivos a Crear/Modificar
 
-| # | Archivo | Módulo |
-|---|---------|--------|
-| 1 | `ZbColumnFamilies.java` | protocol |
-| 2 | `ImmutableXxxState.java` | engine/state/immutable |
-| 3 | `MutableXxxState.java` | engine/state/mutable |
-| 4 | `DbXxxState.java` | engine/state/instance |
-| 5 | `MutableProcessingState.java` | engine/state/mutable |
-| 6 | `DbState.java` o `ProcessingDbState.java` | engine/state |
+| # |                  Archivo                  |         Módulo         |
+|---|-------------------------------------------|------------------------|
+| 1 | `ZbColumnFamilies.java`                   | protocol               |
+| 2 | `ImmutableXxxState.java`                  | engine/state/immutable |
+| 3 | `MutableXxxState.java`                    | engine/state/mutable   |
+| 4 | `DbXxxState.java`                         | engine/state/instance  |
+| 5 | `MutableProcessingState.java`             | engine/state/mutable   |
+| 6 | `DbState.java` o `ProcessingDbState.java` | engine/state           |
 
 ## Paso 1: Definir Column Families
 
@@ -222,20 +222,20 @@ public final class DbMyEntityState
 
 ### Keys disponibles (zeebe/zb-db)
 
-| Clase | Uso |
-|-------|-----|
-| `DbLong` | Clave numérica (entity key) |
-| `DbString` | Clave string (nombre, tipo) |
-| `DbBytes` | Clave en bytes crudos |
-| `DbCompositeKey<A, B>` | Clave compuesta (para índices) |
-| `DbForeignKey<T>` | Referencia a otra column family |
-| `DbTenantAwareKey<T>` | Clave con tenant ID |
+|         Clase          |               Uso               |
+|------------------------|---------------------------------|
+| `DbLong`               | Clave numérica (entity key)     |
+| `DbString`             | Clave string (nombre, tipo)     |
+| `DbBytes`              | Clave en bytes crudos           |
+| `DbCompositeKey<A, B>` | Clave compuesta (para índices)  |
+| `DbForeignKey<T>`      | Referencia a otra column family |
+| `DbTenantAwareKey<T>`  | Clave con tenant ID             |
 
 ### Values disponibles
 
-| Clase | Uso |
-|-------|-----|
-| `DbNil` | Sin valor (para índices, solo la key importa) |
+|      Clase       |                      Uso                       |
+|------------------|------------------------------------------------|
+| `DbNil`          | Sin valor (para índices, solo la key importa)  |
 | Custom `DbValue` | Valor serializado (implementar `write`/`wrap`) |
 
 ### Ejemplo de Value personalizado
@@ -379,16 +379,19 @@ public final class DbJobState implements JobState, MutableJobState {
 ## Patrones Comunes de Column Family
 
 ### Dato Principal (key → value)
+
 ```
 CF: JOBS          key=42 → {type:"payment", retries:3, ...}
 ```
 
 ### Estado (key → enum byte)
+
 ```
 CF: JOB_STATES    key=42 → ACTIVATABLE (byte 0)
 ```
 
 ### Índice por Propiedad ([prop, key] → nil)
+
 ```
 CF: JOB_ACTIVATABLE  ["payment", 42] → nil
                      ["payment", 87] → nil  
@@ -396,12 +399,14 @@ CF: JOB_ACTIVATABLE  ["payment", 42] → nil
 ```
 
 ### Índice Temporal ([timestamp, key] → nil)
+
 ```
 CF: JOB_DEADLINES  [1700000000, 42] → nil
                    [1700001000, 87] → nil
 ```
 
 ### Multi-tenant ([prop, key] + tenant → nil)
+
 ```
 CF: JOB_ACTIVATABLE  [["payment", 42], "tenant-a"] → nil
                      [["payment", 87], "tenant-b"] → nil
@@ -428,3 +433,4 @@ CF: JOB_ACTIVATABLE  [["payment", 42], "tenant-a"] → nil
 - [ ] Usado en processors/event appliers
 - [ ] Tests unitarios del state
 - [ ] Verificar que el estado es reconstruible desde events
+

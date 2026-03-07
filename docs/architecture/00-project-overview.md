@@ -9,13 +9,15 @@ Zeebe es un **motor de orquestación de workflows** distribuido, diseñado para 
 ## Conceptos Clave
 
 ### ¿Qué hace Zeebe?
-1. **Despliega** definiciones de procesos BPMN 2.0  
+
+1. **Despliega** definiciones de procesos BPMN 2.0
 2. **Crea instancias** de esos procesos
 3. **Ejecuta** los elementos BPMN (service tasks, gateways, events, etc.)
 4. **Distribuye jobs** a workers externos que ejecutan la lógica de negocio
 5. **Gestiona el estado** de todas las instancias de proceso de forma persistente y distribuida
 
 ### Modelo de Ejecución
+
 ```
 Cliente → Gateway (gRPC/REST) → Broker → Engine → Log de Eventos
                                                         ↓
@@ -33,6 +35,7 @@ Cliente → Gateway (gRPC/REST) → Broker → Engine → Log de Eventos
 - Los **exporters** envían datos a sistemas externos (Elasticsearch/OpenSearch)
 
 ### Particionamiento
+
 - Los datos se dividen en **particiones** (como Kafka)
 - Cada partición tiene un **líder** (escribe) y **seguidores** (replican)
 - El consenso usa **Raft** (implementación Atomix)
@@ -91,69 +94,76 @@ opencamunda/
 
 ## Identidad del Proyecto
 
-| Propiedad | Valor |
-|-----------|-------|
-| GroupId | `io.camunda` |
-| Versión | `8.5.25` |
-| Java mínimo | JDK 21 (core), JDK 8 (clientes) |
-| Licencia | Zeebe Community License 1.1 + Apache 2.0 (clientes/APIs) |
-| Build | Maven 3.x |
+|  Propiedad  |                          Valor                           |
+|-------------|----------------------------------------------------------|
+| GroupId     | `io.camunda`                                             |
+| Versión     | `8.5.25`                                                 |
+| Java mínimo | JDK 21 (core), JDK 8 (clientes)                          |
+| Licencia    | Zeebe Community License 1.1 + Apache 2.0 (clientes/APIs) |
+| Build       | Maven 3.x                                                |
 
 ## Cómo Compilar
 
 ### Build rápido (sin tests ni checks)
+
 ```bash
 mvn clean install -Dquickly
 ```
 
 ### Build completo (sin tests)
+
 ```bash
 mvn clean install -DskipTests
 ```
 
 ### Build completo con tests
+
 ```bash
 mvn verify
 ```
 
 ### Solo un módulo específico
+
 ```bash
 mvn clean install -pl zeebe/engine -am -DskipTests
 ```
+
 - `-pl zeebe/engine` → solo el módulo engine
 - `-am` → also-make (compila dependencias necesarias)
 
 ## Cómo Ejecutar
 
 ### Docker
+
 ```bash
 DOCKER_BUILDKIT=1 docker build -t opencamunda .
 docker run -p 26500:26500 -p 8080:8080 opencamunda
 ```
 
 ### Puertos
-| Puerto | Protocolo | Uso |
-|--------|-----------|-----|
-| 26500 | gRPC | API principal (clientes se conectan aquí) |
-| 26501 | Internal | Comunicación entre brokers (command API) |
-| 26502 | Internal | Comunicación interna del cluster |
-| 8080 | HTTP | REST API + actuator/management |
+
+| Puerto | Protocolo |                    Uso                    |
+|--------|-----------|-------------------------------------------|
+| 26500  | gRPC      | API principal (clientes se conectan aquí) |
+| 26501  | Internal  | Comunicación entre brokers (command API)  |
+| 26502  | Internal  | Comunicación interna del cluster          |
+| 8080   | HTTP      | REST API + actuator/management            |
 
 ## Tecnologías Principales
 
-| Tecnología | Versión | Uso |
-|------------|---------|-----|
-| Java | 21 | Runtime principal |
-| Spring Boot | 3.4.10 | Framework para configuración y REST |
-| gRPC | 1.65.1 | API principal de comunicación |
-| Protobuf | 3.25.8 | Serialización gRPC |
-| RocksDB | 8.11.4 | Almacenamiento de estado |
-| Netty | 4.1.127 | Transporte de red |
-| SBE | 1.30.0 | Serialización binaria del protocolo |
-| Scala | 2.13.17 | FEEL/DMN engines |
-| Jackson | 2.18.4 | JSON serialización |
-| Elasticsearch | 8.9.2 | Exporter de datos |
-| Log4j | 2.23.1 | Logging |
+|  Tecnología   | Versión |                 Uso                 |
+|---------------|---------|-------------------------------------|
+| Java          | 21      | Runtime principal                   |
+| Spring Boot   | 3.4.10  | Framework para configuración y REST |
+| gRPC          | 1.65.1  | API principal de comunicación       |
+| Protobuf      | 3.25.8  | Serialización gRPC                  |
+| RocksDB       | 8.11.4  | Almacenamiento de estado            |
+| Netty         | 4.1.127 | Transporte de red                   |
+| SBE           | 1.30.0  | Serialización binaria del protocolo |
+| Scala         | 2.13.17 | FEEL/DMN engines                    |
+| Jackson       | 2.18.4  | JSON serialización                  |
+| Elasticsearch | 8.9.2   | Exporter de datos                   |
+| Log4j         | 2.23.1  | Logging                             |
 
 ## Siguiente Documento
 

@@ -74,9 +74,9 @@ El **ExporterDirector** es el Actor que coordina la exportación. Hay uno **por 
 
 ### Modos de Operación
 
-| Modo | Rol | Comportamiento |
-|------|-----|---------------|
-| **ACTIVE** | Líder | Lee LogStream, llama `export()`, actualiza posiciones |
+|    Modo     |   Rol    |                     Comportamiento                      |
+|-------------|----------|---------------------------------------------------------|
+| **ACTIVE**  | Líder    | Lee LogStream, llama `export()`, actualiza posiciones   |
 | **PASSIVE** | Follower | Recibe posiciones del líder cada 15s, guarda localmente |
 
 ### Lifecycle del Director
@@ -203,11 +203,13 @@ context.setFilter(new RecordFilter() {
 ## Posiciones y Recovery
 
 ### Persistencia
+
 - Cada exporter tiene su posición independiente
 - Posiciones guardadas en **ExportersState** (tabla ZeebeDb)
 - Incluidas en snapshots para recovery
 
 ### Recovery al Arrancar
+
 ```
 1. Cargar snapshot (incluye posiciones de exporters)
    ↓
@@ -221,6 +223,7 @@ context.setFilter(new RecordFilter() {
 ```
 
 ### Implicaciones
+
 - **At-least-once**: Un record puede exportarse más de una vez (crash entre export y update posición)
 - **Ordered**: Records se exportan en orden de posición
 - **Per-partition**: Cada partición tiene sus exporters independientes
@@ -228,32 +231,32 @@ context.setFilter(new RecordFilter() {
 ## Diagrama de Componentes
 
 ```
-                    ┌────────────────────┐
-                    │    ExporterDirector │ (per partition, Actor)
-                    │    ┌──────────────┐│
-                    │    │LogStreamReader││ ← Lee records
-                    │    └──────┬───────┘│
-                    │           │        │
-                    │    ┌──────▼───────┐│
-                    │    │RecordExporter ││ ← Wrappea en Record<?>
-                    │    └──────┬───────┘│
-                    │           │        │
-           ┌────────┼───────────┼────────┼──────────┐
-           │        │           │        │          │
-    ┌──────▼──────┐ │   ┌──────▼──────┐ │  ┌───────▼─────┐
-    │ExporterCont.│ │   │ExporterCont.│ │  │ExporterCont.│
-    │ OpenSearch  │ │   │ Elastic     │ │  │ Custom      │
-    │ ┌─────────┐ │ │   │ ┌─────────┐ │ │  │ ┌─────────┐ │
-    │ │Exporter │ │ │   │ │Exporter │ │ │  │ │Exporter │ │
-    │ └─────────┘ │ │   │ └─────────┘ │ │  │ └─────────┘ │
-    │ ┌──────────┐│ │   │ pos=42300   │ │  │ pos=42500   │
-    │ │Controller││ │   └─────────────┘ │  └─────────────┘
-    │ │pos=42100 ││ │                    │
-    │ └──────────┘│ │                    │
-    └─────────────┘ │                    │
-                    │  mínima pos = 42100│
-                    │  (punto de inicio) │
-                    └────────────────────┘
+                ┌────────────────────┐
+                │    ExporterDirector │ (per partition, Actor)
+                │    ┌──────────────┐│
+                │    │LogStreamReader││ ← Lee records
+                │    └──────┬───────┘│
+                │           │        │
+                │    ┌──────▼───────┐│
+                │    │RecordExporter ││ ← Wrappea en Record<?>
+                │    └──────┬───────┘│
+                │           │        │
+       ┌────────┼───────────┼────────┼──────────┐
+       │        │           │        │          │
+┌──────▼──────┐ │   ┌──────▼──────┐ │  ┌───────▼─────┐
+│ExporterCont.│ │   │ExporterCont.│ │  │ExporterCont.│
+│ OpenSearch  │ │   │ Elastic     │ │  │ Custom      │
+│ ┌─────────┐ │ │   │ ┌─────────┐ │ │  │ ┌─────────┐ │
+│ │Exporter │ │ │   │ │Exporter │ │ │  │ │Exporter │ │
+│ └─────────┘ │ │   │ └─────────┘ │ │  │ └─────────┘ │
+│ ┌──────────┐│ │   │ pos=42300   │ │  │ pos=42500   │
+│ │Controller││ │   └─────────────┘ │  └─────────────┘
+│ │pos=42100 ││ │                    │
+│ └──────────┘│ │                    │
+└─────────────┘ │                    │
+                │  mínima pos = 42100│
+                │  (punto de inicio) │
+                └────────────────────┘
 ```
 
 ## Escribir un Exporter Custom
@@ -289,3 +292,4 @@ public class MyExporter implements Exporter {
     }
 }
 ```
+

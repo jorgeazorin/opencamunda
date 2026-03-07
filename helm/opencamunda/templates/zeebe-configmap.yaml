@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "opencamunda.zeebe.clusterName" . }}-config
+  labels:
+    {{- include "opencamunda.zeebe.labels" . | nindent 4 }}
+data:
+  {{- if .Values.zeebe.configuration }}
+  application.yaml: |
+    {{- .Values.zeebe.configuration | nindent 4 }}
+  {{- else }}
+  application.yaml: |
+    zeebe:
+      broker:
+        gateway:
+          enable: {{ .Values.zeebe.embeddedGateway }}
+        network:
+          host: 0.0.0.0
+        cluster:
+          clusterName: {{ include "opencamunda.zeebe.clusterName" . }}
+          clusterSize: {{ .Values.zeebe.clusterSize }}
+          replicationFactor: {{ .Values.zeebe.replicationFactor }}
+          partitionsCount: {{ .Values.zeebe.partitionCount }}
+          initialContactPoints:
+            {{- range $i := until (int .Values.zeebe.clusterSize) }}
+            - {{ include "opencamunda.zeebe.clusterName" $ }}-{{ $i }}.{{ include "opencamunda.zeebe.clusterName" $ }}:{{ $.Values.zeebe.service.internalPort }}
+            {{- end }}
+        {{- if and .Values.exporter.elasticsearch.enabled .Values.elasticsearch.enabled }}
+        exporters:
+          elasticsearch:
+            className: io.camunda.zeebe.exporter.ElasticsearchExporter
+            args:
+              url: {{ include "opencamunda.elasticsearch.url" . }}
+              bulk:
+                size: 1
+        {{- end }}
+  {{- end }}
+  {{- range $name, $content := .Values.zeebe.extraConfiguration }}
+  {{ $name }}: |
+    {{- $content | nindent 4 }}
+  {{- end }}

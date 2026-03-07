@@ -34,6 +34,7 @@ service Gateway {
 ```
 
 **Reference:** The `ResolveIncident` messages are defined as:
+
 ```protobuf
 message ResolveIncidentRequest {
   int64 incidentKey = 1;
@@ -62,6 +63,7 @@ public void myNewCommand(
 ```
 
 **Pattern from ResolveIncident:**
+
 ```java
 @Override
 public void resolveIncident(
@@ -111,6 +113,7 @@ public static BrokerMyNewCommandRequest toMyNewCommandRequest(
 ```
 
 **Pattern from ResolveIncident:**
+
 ```java
 public static BrokerResolveIncidentRequest toResolveIncidentRequest(
     final ResolveIncidentRequest grpcRequest) {
@@ -150,6 +153,7 @@ public final class BrokerMyNewCommandRequest extends BrokerExecuteCommand<MyNewC
 ```
 
 **Reference:** `BrokerResolveIncidentRequest` at `zeebe/gateway/src/main/java/io/camunda/zeebe/gateway/impl/broker/request/BrokerResolveIncidentRequest.java`:
+
 ```java
 public final class BrokerResolveIncidentRequest extends BrokerExecuteCommand<IncidentRecord> {
   private final IncidentRecord requestDto = new IncidentRecord();
@@ -179,6 +183,7 @@ public static MyNewCommandResponse toMyNewCommandResponse(
 ```
 
 **Pattern from ResolveIncident:**
+
 ```java
 public static ResolveIncidentResponse toResolveIncidentResponse(
     final long key, final IncidentRecord brokerResponse) {
@@ -235,6 +240,7 @@ typedRecordProcessors.onCommand(
 ```
 
 **Pattern from Incident:**
+
 ```java
 // In IncidentEventProcessors.addProcessors():
 typedRecordProcessors.onCommand(
@@ -283,6 +289,7 @@ register(MyNewCommandIntent.DONE, new MyNewCommandDoneApplier(state));
 **File:** `zeebe/engine/src/main/java/io/camunda/zeebe/engine/Engine.java`
 
 Ensure your new `ValueType` is included in the range or add it explicitly:
+
 ```java
 private static final EnumSet<ValueType> SUPPORTED_VALUETYPES =
     EnumSet.range(ValueType.JOB, ValueType.MULTI_INSTANCE);
@@ -307,22 +314,23 @@ Client → gRPC stub
 ```
 
 ### Files Changed Checklist
-| # | File | Action |
-|---|------|--------|
-| 1 | `zeebe/gateway-protocol/src/main/proto/gateway.proto` | Add messages + RPC |
-| 2 | `zeebe/gateway/.../GatewayGrpcService.java` | Override new method |
-| 3 | `zeebe/gateway/.../EndpointManager.java` | Add handler method |
-| 4 | `zeebe/gateway/.../RequestMapper.java` | Add mapping method |
-| 5 | `zeebe/gateway/.../impl/broker/request/BrokerXxxRequest.java` | **New file** |
-| 6 | `zeebe/gateway/.../ResponseMapper.java` | Add mapping method |
-| 7 | `zeebe/protocol/.../ValueType.java` | Add enum (if new type) |
-| 8 | `zeebe/protocol/.../intent/XxxIntent.java` | **New file** |
-| 9 | `zeebe/protocol-impl/.../record/value/xxx/XxxRecord.java` | **New file** (record value) |
-| 10 | `zeebe/engine/.../processing/xxx/XxxProcessor.java` | **New file** |
-| 11 | `zeebe/engine/.../processing/EngineProcessors.java` | Register processor |
-| 12 | `zeebe/engine/.../state/appliers/EventAppliers.java` | Register event applier |
-| 13 | `zeebe/engine/.../state/appliers/XxxApplier.java` | **New file** |
-| 14 | `zeebe/engine/.../Engine.java` | Ensure ValueType in supported set |
+
+| #  |                             File                              |              Action               |
+|----|---------------------------------------------------------------|-----------------------------------|
+| 1  | `zeebe/gateway-protocol/src/main/proto/gateway.proto`         | Add messages + RPC                |
+| 2  | `zeebe/gateway/.../GatewayGrpcService.java`                   | Override new method               |
+| 3  | `zeebe/gateway/.../EndpointManager.java`                      | Add handler method                |
+| 4  | `zeebe/gateway/.../RequestMapper.java`                        | Add mapping method                |
+| 5  | `zeebe/gateway/.../impl/broker/request/BrokerXxxRequest.java` | **New file**                      |
+| 6  | `zeebe/gateway/.../ResponseMapper.java`                       | Add mapping method                |
+| 7  | `zeebe/protocol/.../ValueType.java`                           | Add enum (if new type)            |
+| 8  | `zeebe/protocol/.../intent/XxxIntent.java`                    | **New file**                      |
+| 9  | `zeebe/protocol-impl/.../record/value/xxx/XxxRecord.java`     | **New file** (record value)       |
+| 10 | `zeebe/engine/.../processing/xxx/XxxProcessor.java`           | **New file**                      |
+| 11 | `zeebe/engine/.../processing/EngineProcessors.java`           | Register processor                |
+| 12 | `zeebe/engine/.../state/appliers/EventAppliers.java`          | Register event applier            |
+| 13 | `zeebe/engine/.../state/appliers/XxxApplier.java`             | **New file**                      |
+| 14 | `zeebe/engine/.../Engine.java`                                | Ensure ValueType in supported set |
 
 ---
 
@@ -367,14 +375,14 @@ public class ExecutableMyNewElement extends ExecutableActivity {
 
 The lifecycle methods are:
 
-| Method | Purpose |
-|--------|---------|
-| `onActivate(T, BpmnElementContext)` | Initialize and activate the element |
+|                   Method                    |                Purpose                 |
+|---------------------------------------------|----------------------------------------|
+| `onActivate(T, BpmnElementContext)`         | Initialize and activate the element    |
 | `finalizeActivation(T, BpmnElementContext)` | Called after START execution listeners |
-| `onComplete(T, BpmnElementContext)` | Leave the element, take outgoing flows |
-| `finalizeCompletion(T, BpmnElementContext)` | Called after END execution listeners |
-| `onTerminate(T, BpmnElementContext)` | Clean up on termination |
-| `getType()` | Return the executable model class |
+| `onComplete(T, BpmnElementContext)`         | Leave the element, take outgoing flows |
+| `finalizeCompletion(T, BpmnElementContext)` | Called after END execution listeners   |
+| `onTerminate(T, BpmnElementContext)`        | Clean up on termination                |
+| `getType()`                                 | Return the executable model class      |
 
 **Simplest example — ManualTaskProcessor:**
 
@@ -467,6 +475,7 @@ processors.put(
 ```
 
 **Existing registrations for reference:**
+
 ```java
 // tasks
 processors.put(BpmnElementType.SERVICE_TASK,
@@ -499,15 +508,17 @@ The transformer maps BPMN model elements to executable elements. The `BpmnElemen
 The `BpmnStreamProcessor` uses `BpmnElementProcessors.getProcessor(bpmnElementType)` to look up the correct processor. As long as you registered in Step 4, this works automatically.
 
 ### Summary: Files Changed
-| # | File | Action |
-|---|------|--------|
-| 1 | `zeebe/protocol/.../BpmnElementType.java` | Add enum value |
-| 2 | `zeebe/engine/.../bpmn/task/MyNewElementProcessor.java` | **New file** |
-| 3 | `zeebe/engine/.../bpmn/BpmnElementProcessors.java` | Register processor |
-| 4 | `zeebe/engine/.../deployment/model/element/ExecutableMyElement.java` | **New file** (if custom model needed) |
-| 5 | `zeebe/engine/.../deployment/model/transformer/` | Update transformer (if custom parsing needed) |
+
+| # |                                 File                                 |                    Action                     |
+|---|----------------------------------------------------------------------|-----------------------------------------------|
+| 1 | `zeebe/protocol/.../BpmnElementType.java`                            | Add enum value                                |
+| 2 | `zeebe/engine/.../bpmn/task/MyNewElementProcessor.java`              | **New file**                                  |
+| 3 | `zeebe/engine/.../bpmn/BpmnElementProcessors.java`                   | Register processor                            |
+| 4 | `zeebe/engine/.../deployment/model/element/ExecutableMyElement.java` | **New file** (if custom model needed)         |
+| 5 | `zeebe/engine/.../deployment/model/transformer/`                     | Update transformer (if custom parsing needed) |
 
 ### Element Processor Directory Structure
+
 ```
 zeebe/engine/src/main/java/io/camunda/zeebe/engine/processing/bpmn/
 ├── BpmnElementProcessor.java          ← Interface
@@ -567,6 +578,7 @@ public interface Exporter {
 ### Step 2: Understand the Context and Controller
 
 **Context interface:** `zeebe/exporter-api/src/main/java/io/camunda/zeebe/exporter/api/context/Context.java`
+
 ```java
 public interface Context {
   MeterRegistry getMeterRegistry();
@@ -583,6 +595,7 @@ public interface Context {
 ```
 
 **Controller interface:** `zeebe/exporter-api/src/main/java/io/camunda/zeebe/exporter/api/context/Controller.java`
+
 ```java
 public interface Controller {
   /** Signal that all records up to this position are exported. */
@@ -679,6 +692,7 @@ public class MyCustomExporter implements Exporter {
 **Config location:** `application.yaml` (or environment variables)
 
 For **internal** exporters (classes on the broker classpath):
+
 ```yaml
 zeebe:
   broker:
@@ -691,6 +705,7 @@ zeebe:
 ```
 
 For **external** exporters (packaged as a JAR):
+
 ```yaml
 zeebe:
   broker:
@@ -703,6 +718,7 @@ zeebe:
 ```
 
 **Config class:** `zeebe/broker/src/main/java/io/camunda/zeebe/broker/system/configuration/ExporterCfg.java`
+
 ```java
 public final class ExporterCfg implements ConfigurationEntry {
   private String jarPath;      // optional — for external JARs
@@ -745,15 +761,16 @@ The `controller.updateLastExportedRecordPosition(position)` call is crucial:
 - Call it only after the record is **durably persisted** in your target system
 
 ### Key Files Reference
-| File | Purpose |
-|------|---------|
-| `zeebe/exporter-api/src/main/java/.../Exporter.java` | Core interface |
-| `zeebe/exporter-api/src/main/java/.../context/Context.java` | Configuration + filtering context |
-| `zeebe/exporter-api/src/main/java/.../context/Controller.java` | Position tracking + scheduling |
-| `zeebe/broker/src/main/java/.../debug/DebugLogExporter.java` | Simplest reference implementation |
-| `zeebe/broker/src/main/java/.../configuration/ExporterCfg.java` | YAML config model |
-| `zeebe/broker/src/main/java/.../repo/ExporterDescriptor.java` | Exporter loading/instantiation |
-| `zeebe/broker/src/main/java/.../context/ExporterContext.java` | Context implementation |
+
+|                              File                               |              Purpose              |
+|-----------------------------------------------------------------|-----------------------------------|
+| `zeebe/exporter-api/src/main/java/.../Exporter.java`            | Core interface                    |
+| `zeebe/exporter-api/src/main/java/.../context/Context.java`     | Configuration + filtering context |
+| `zeebe/exporter-api/src/main/java/.../context/Controller.java`  | Position tracking + scheduling    |
+| `zeebe/broker/src/main/java/.../debug/DebugLogExporter.java`    | Simplest reference implementation |
+| `zeebe/broker/src/main/java/.../configuration/ExporterCfg.java` | YAML config model                 |
+| `zeebe/broker/src/main/java/.../repo/ExporterDescriptor.java`   | Exporter loading/instantiation    |
+| `zeebe/broker/src/main/java/.../context/ExporterContext.java`   | Context implementation            |
 
 ### Exporter Lifecycle
 
@@ -800,9 +817,10 @@ public enum ZbColumnFamilies implements EnumValue {
 ```
 
 **To add a new column family:** append a new constant with the next available integer:
+
 ```java
-  MY_NEW_STATE(112),
-  MY_NEW_STATE_INDEX(113),
+MY_NEW_STATE(112),
+MY_NEW_STATE_INDEX(113),
 ```
 
 > **Important:** IDs are permanent. Never reuse or reorder IDs — they're stored in the database.
@@ -810,28 +828,30 @@ public enum ZbColumnFamilies implements EnumValue {
 ### Step 2: Understand DbKey and DbValue
 
 **File:** `zeebe/zb-db/src/main/java/io/camunda/zeebe/db/DbKey.java`
+
 ```java
 public interface DbKey extends BufferReader, BufferWriter {}
 ```
 
 **File:** `zeebe/zb-db/src/main/java/io/camunda/zeebe/db/DbValue.java`
+
 ```java
 public interface DbValue extends BufferWriter, BufferReader {}
 ```
 
 Built-in key/value types in `zeebe/zb-db/src/main/java/io/camunda/zeebe/db/impl/`:
 
-| Class | Purpose |
-|-------|---------|
-| `DbLong` | 64-bit long key/value |
-| `DbString` | String key/value |
-| `DbInt` | 32-bit int key/value |
-| `DbByte` | Single byte |
-| `DbBytes` | Byte array |
-| `DbNil` | Empty value (for set-like column families) |
-| `DbCompositeKey<A, B>` | Composite key of two sub-keys |
-| `DbForeignKey<T>` | Key that references another column family (for integrity) |
-| `DbTenantAwareKey<T>` | Key with tenant ID prefix/suffix |
+|         Class          |                          Purpose                          |
+|------------------------|-----------------------------------------------------------|
+| `DbLong`               | 64-bit long key/value                                     |
+| `DbString`             | String key/value                                          |
+| `DbInt`                | 32-bit int key/value                                      |
+| `DbByte`               | Single byte                                               |
+| `DbBytes`              | Byte array                                                |
+| `DbNil`                | Empty value (for set-like column families)                |
+| `DbCompositeKey<A, B>` | Composite key of two sub-keys                             |
+| `DbForeignKey<T>`      | Key that references another column family (for integrity) |
+| `DbTenantAwareKey<T>`  | Key with tenant ID prefix/suffix                          |
 
 ### Step 3: Study the DbJobState Pattern
 
@@ -841,6 +861,7 @@ Built-in key/value types in `zeebe/zb-db/src/main/java/io/camunda/zeebe/db/impl/
 This is the concrete implementation. Key patterns:
 
 **Constructor — define keys, values, and column families:**
+
 ```java
 public DbJobState(
     final ZeebeDb<ZbColumnFamilies> zeebeDb,
@@ -873,6 +894,7 @@ public DbJobState(
 ```
 
 **State modification operations:**
+
 ```java
 @Override
 public void create(final long key, final JobRecord record) {
@@ -901,6 +923,7 @@ Follow this pattern:
 **4a. Define the immutable interface:**
 
 **File (new):** `zeebe/engine/src/main/java/io/camunda/zeebe/engine/state/immutable/MyNewState.java`
+
 ```java
 package io.camunda.zeebe.engine.state.immutable;
 
@@ -913,6 +936,7 @@ public interface MyNewState {
 **4b. Define the mutable interface:**
 
 **File (new):** `zeebe/engine/src/main/java/io/camunda/zeebe/engine/state/mutable/MutableMyNewState.java`
+
 ```java
 package io.camunda.zeebe.engine.state.mutable;
 
@@ -928,6 +952,7 @@ public interface MutableMyNewState extends MyNewState {
 **4c. Implement the Db-backed state:**
 
 **File (new):** `zeebe/engine/src/main/java/io/camunda/zeebe/engine/state/instance/DbMyNewState.java`
+
 ```java
 package io.camunda.zeebe.engine.state.instance;
 
@@ -993,6 +1018,7 @@ public final class DbMyNewState implements MutableMyNewState {
 **File:** `zeebe/engine/src/main/java/io/camunda/zeebe/engine/state/mutable/MutableProcessingState.java`
 
 Add accessor:
+
 ```java
 @Override
 MutableMyNewState getMyNewState();
@@ -1003,6 +1029,7 @@ Then update the concrete implementation to instantiate `DbMyNewState` in its con
 ### Step 6: Use State in Processors and Event Appliers
 
 **In a processor (command handler):**
+
 ```java
 public class MyProcessor implements TypedRecordProcessor<MyRecord> {
   private final MutableMyNewState myNewState;
@@ -1024,6 +1051,7 @@ public class MyProcessor implements TypedRecordProcessor<MyRecord> {
 **In an event applier (applies state changes on replay):**
 
 **File (new):** `zeebe/engine/src/main/java/io/camunda/zeebe/engine/state/appliers/MyNewCreatedApplier.java`
+
 ```java
 public class MyNewCreatedApplier implements TypedEventApplier<MyNewIntent, MyNewRecordValue> {
   private final MutableMyNewState state;
@@ -1040,6 +1068,7 @@ public class MyNewCreatedApplier implements TypedEventApplier<MyNewIntent, MyNew
 ```
 
 Then register in `EventAppliers.registerEventAppliers()`:
+
 ```java
 register(MyNewIntent.CREATED, new MyNewCreatedApplier(state.getMyNewState()));
 ```
@@ -1091,17 +1120,18 @@ indexFamily.whileEqualPrefix(typeKey, (key, nil) -> {
 ```
 
 ### Files Changed Checklist
-| # | File | Action |
-|---|------|--------|
-| 1 | `zeebe/protocol/.../ZbColumnFamilies.java` | Add new column family enum(s) |
-| 2 | `zeebe/engine/.../state/immutable/MyNewState.java` | **New file** — read interface |
-| 3 | `zeebe/engine/.../state/mutable/MutableMyNewState.java` | **New file** — write interface |
-| 4 | `zeebe/engine/.../state/instance/DbMyNewState.java` | **New file** — implementation |
-| 5 | `zeebe/engine/.../state/mutable/MutableProcessingState.java` | Add accessor |
-| 6 | `zeebe/engine/.../state/immutable/ProcessingState.java` | Add accessor |
-| 7 | Concrete ProcessingState implementation | Instantiate DbMyNewState |
-| 8 | `zeebe/engine/.../state/appliers/EventAppliers.java` | Register applier |
-| 9 | `zeebe/engine/.../state/appliers/MyNewCreatedApplier.java` | **New file** |
+
+| # |                             File                             |             Action             |
+|---|--------------------------------------------------------------|--------------------------------|
+| 1 | `zeebe/protocol/.../ZbColumnFamilies.java`                   | Add new column family enum(s)  |
+| 2 | `zeebe/engine/.../state/immutable/MyNewState.java`           | **New file** — read interface  |
+| 3 | `zeebe/engine/.../state/mutable/MutableMyNewState.java`      | **New file** — write interface |
+| 4 | `zeebe/engine/.../state/instance/DbMyNewState.java`          | **New file** — implementation  |
+| 5 | `zeebe/engine/.../state/mutable/MutableProcessingState.java` | Add accessor                   |
+| 6 | `zeebe/engine/.../state/immutable/ProcessingState.java`      | Add accessor                   |
+| 7 | Concrete ProcessingState implementation                      | Instantiate DbMyNewState       |
+| 8 | `zeebe/engine/.../state/appliers/EventAppliers.java`         | Register applier               |
+| 9 | `zeebe/engine/.../state/appliers/MyNewCreatedApplier.java`   | **New file**                   |
 
 ### State Architecture Summary
 
@@ -1123,3 +1153,4 @@ Data flow:
   Processor writes event → StateWriter → EventApplier → TypedEventApplier → MutableState → ColumnFamily
   Processor reads state ← ProcessingState ← DbXxxState ← ColumnFamily
 ```
+

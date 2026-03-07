@@ -93,11 +93,13 @@ public interface ColumnFamily<KeyType extends DbKey, ValueType extends DbValue> 
 ```
 
 ### Iteración por prefijo
+
 La operación más importante para consultas. RocksDB ordena keys lexicográficamente, así que buscar por prefijo es O(n) donde n es el número de resultados, no el tamaño total.
 
 ## Tipos de DbKey y DbValue
 
 ### Keys primitivas
+
 ```java
 DbLong          // long (8 bytes)
 DbInt           // int (4 bytes)
@@ -107,6 +109,7 @@ DbNil           // Vacío (para column families key-only)
 ```
 
 ### Keys compuestas
+
 ```java
 DbCompositeKey<First, Second>   // Concatena dos keys
 // Ejemplo: DbCompositeKey<DbString, DbLong> → "myType" + 12345
@@ -117,6 +120,7 @@ DbForeignKey<T extends DbKey>   // Key con referencia a otra CF
 ```
 
 ### Values
+
 Cualquier clase que implemente `DbValue` (que extiende `BufferReader` + `BufferWriter`):
 - Serialización a buffer de Agrona
 - Zero-copy: lee/escribe directamente en buffers de memoria
@@ -170,6 +174,7 @@ public class DbJobState {
 **Patrón**: Una CF para datos + múltiples CFs como índices secundarios.
 
 Para encontrar jobs activables de tipo "payment":
+
 ```java
 activatableColumnFamily.whileEqualPrefix(
     new DbString("payment"),  // prefijo
@@ -200,6 +205,7 @@ public class DbElementInstanceState {
 ```
 
 ### ElementInstance (Value)
+
 ```java
 public class ElementInstance implements DbValue {
     long key;
@@ -288,12 +294,14 @@ Recovery:
 ## Patrones de Consulta Comunes
 
 ### Lookup por key
+
 ```java
 // O(1) - hash lookup en RocksDB
 JobRecord job = jobsColumnFamily.get(new DbLong(jobKey));
 ```
 
 ### Buscar por tipo (prefijo)
+
 ```java
 // O(n) donde n = resultados, no tamaño total
 activatableColumnFamily.whileEqualPrefix(
@@ -303,6 +311,7 @@ activatableColumnFamily.whileEqualPrefix(
 ```
 
 ### Iterar hijos
+
 ```java
 // Buscar todos los hijos de un elemento usando CompositeKey
 parentChildColumnFamily.whileEqualPrefix(
@@ -315,6 +324,8 @@ parentChildColumnFamily.whileEqualPrefix(
 ```
 
 ### Verificar existencia
+
 ```java
 boolean exists = columnFamily.exists(key);  // O(1)
 ```
+

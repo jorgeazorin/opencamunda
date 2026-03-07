@@ -15,29 +15,29 @@ Un worker se suscribe a un tipo de job, lo procesa, y reporta el resultado al br
 ## Ciclo de Vida del Job
 
 ```
-                    ┌──────────────┐
-                    │   CREATED    │ ← Engine crea el job (Service Task activated)
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │  ACTIVATABLE │ ← Job disponible para workers
-                    └──────┬───────┘
-                           │ Worker llama ActivateJobs
-                    ┌──────▼───────┐
-                    │  ACTIVATED   │ ← Asignado a un worker
-                    └──────┬───────┘
-                           │
-              ┌────────────┼─────────────┬──────────────┐
-              │            │             │              │
-       ┌──────▼───┐  ┌────▼─────┐  ┌───▼────────┐  ┌──▼──────────┐
-       │COMPLETED │  │  FAILED  │  │TIMED_OUT   │  │ERROR_THROWN │
-       └──────────┘  └────┬─────┘  └───┬────────┘  └─────────────┘
-                          │            │
-                    ┌─────▼────────────▼────┐
-                    │   ACTIVATABLE         │ ← Reintento (si retries > 0)
-                    │   (o FAILED si        │
-                    │    retries = 0)       │
-                    └───────────────────────┘
+             ┌──────────────┐
+             │   CREATED    │ ← Engine crea el job (Service Task activated)
+             └──────┬───────┘
+                    │
+             ┌──────▼───────┐
+             │  ACTIVATABLE │ ← Job disponible para workers
+             └──────┬───────┘
+                    │ Worker llama ActivateJobs
+             ┌──────▼───────┐
+             │  ACTIVATED   │ ← Asignado a un worker
+             └──────┬───────┘
+                    │
+       ┌────────────┼─────────────┬──────────────┐
+       │            │             │              │
+┌──────▼───┐  ┌────▼─────┐  ┌───▼────────┐  ┌──▼──────────┐
+│COMPLETED │  │  FAILED  │  │TIMED_OUT   │  │ERROR_THROWN │
+└──────────┘  └────┬─────┘  └───┬────────┘  └─────────────┘
+                   │            │
+             ┌─────▼────────────▼────┐
+             │   ACTIVATABLE         │ ← Reintento (si retries > 0)
+             │   (o FAILED si        │
+             │    retries = 0)       │
+             └───────────────────────┘
 ```
 
 ## Cómo se Crean los Jobs
@@ -91,6 +91,7 @@ Cuando el Broker crea un job del tipo "payment":
 ## Procesamiento en el Broker
 
 ### JobBatchActivateProcessor
+
 Procesa `ActivateJobs` del worker:
 
 ```
@@ -106,6 +107,7 @@ Procesa `ActivateJobs` del worker:
 ```
 
 ### JobCompleteProcessor
+
 Procesa `CompleteJob` del worker:
 
 ```
@@ -117,6 +119,7 @@ Procesa `CompleteJob` del worker:
 ```
 
 ### JobFailProcessor
+
 Procesa `FailJob` del worker:
 
 ```
@@ -131,6 +134,7 @@ Procesa `FailJob` del worker:
 ```
 
 ### JobTimeOutProcessor
+
 Se ejecuta periódicamente (scheduled task):
 
 ```
@@ -143,6 +147,7 @@ Se ejecuta periódicamente (scheduled task):
 ```
 
 ### JobThrowErrorProcessor
+
 Worker lanza un error BPMN:
 
 ```
@@ -176,6 +181,7 @@ ColumnFamily<...> backoffColumnFamily;
 ```
 
 ### Consultas típicas
+
 - **Jobs activables por tipo**: `activatableColumnFamily.whileEqualPrefix("payment")`
 - **Jobs con timeout**: `deadlinesColumnFamily.whileEqualPrefix(...)` donde deadline < ahora
 - **Jobs en backoff**: `backoffColumnFamily.whileEqualPrefix(...)` donde backoff > ahora
@@ -183,12 +189,14 @@ ColumnFamily<...> backoffColumnFamily;
 ## Timeouts y Backoff
 
 ### Job Timeout
+
 - Se establece cuando el worker activa el job
 - Si el worker no completa/falla antes del deadline → `TIME_OUT`
 - El `JobTimeoutCheckerScheduler` verifica periódicamente
 - Configurable: `EngineConfiguration.jobsTimeoutCheckerPollingInterval`
 
 ### Retry Backoff
+
 - Cuando un job falla, el worker puede especificar `retryBackoff`
 - El job no será activable durante ese tiempo
 - Algoritmo por defecto: exponential backoff
@@ -197,6 +205,7 @@ ColumnFamily<...> backoffColumnFamily;
 ## Custom Headers
 
 Los Service Tasks pueden definir headers custom en BPMN:
+
 ```xml
 <zeebe:taskHeaders>
     <zeebe:header key="url" value="https://api.payment.com" />
@@ -257,3 +266,4 @@ Tiempo →
     └─ INCIDENTE creado
     └─ Proceso BLOQUEADO hasta que se resuelva el incidente
 ```
+

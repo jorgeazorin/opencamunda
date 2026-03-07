@@ -7,45 +7,50 @@ Zeebe ejecuta procesos **BPMN 2.0** siguiendo un modelo de event sourcing. Cada 
 ## Elementos BPMN Soportados
 
 ### Tasks
-| Elemento | BpmnElementType | Procesador | Comportamiento |
-|----------|----------------|-----------|---------------|
-| Service Task | `SERVICE_TASK` | `JobWorkerTaskProcessor` | Crea job, espera worker |
-| User Task | `USER_TASK` | `UserTaskProcessor` | Crea user task, espera completado |
-| Business Rule Task | `BUSINESS_RULE_TASK` | `BusinessRuleTaskProcessor` | Evalúa DMN o crea job |
-| Script Task | `SCRIPT_TASK` | `ScriptTaskProcessor` | Evalúa FEEL o crea job |
-| Send Task | `SEND_TASK` | `SendTaskProcessor` | Publica mensaje o crea job |
-| Receive Task | `RECEIVE_TASK` | `ReceiveTaskProcessor` | Espera mensaje correlacionado |
-| Manual Task | `MANUAL_TASK` | `ManualTaskProcessor` | Completa automáticamente |
+
+|      Elemento      |   BpmnElementType    |         Procesador          |          Comportamiento           |
+|--------------------|----------------------|-----------------------------|-----------------------------------|
+| Service Task       | `SERVICE_TASK`       | `JobWorkerTaskProcessor`    | Crea job, espera worker           |
+| User Task          | `USER_TASK`          | `UserTaskProcessor`         | Crea user task, espera completado |
+| Business Rule Task | `BUSINESS_RULE_TASK` | `BusinessRuleTaskProcessor` | Evalúa DMN o crea job             |
+| Script Task        | `SCRIPT_TASK`        | `ScriptTaskProcessor`       | Evalúa FEEL o crea job            |
+| Send Task          | `SEND_TASK`          | `SendTaskProcessor`         | Publica mensaje o crea job        |
+| Receive Task       | `RECEIVE_TASK`       | `ReceiveTaskProcessor`      | Espera mensaje correlacionado     |
+| Manual Task        | `MANUAL_TASK`        | `ManualTaskProcessor`       | Completa automáticamente          |
 
 ### Gateways
-| Elemento | BpmnElementType | Procesador | Comportamiento |
-|----------|----------------|-----------|---------------|
-| Exclusive (XOR) | `EXCLUSIVE_GATEWAY` | `ExclusiveGatewayProcessor` | Evalúa condiciones, toma UNA ruta |
-| Parallel (AND) | `PARALLEL_GATEWAY` | `ParallelGatewayProcessor` | Fork: activa todas las rutas / Join: espera todas |
-| Inclusive (OR) | `INCLUSIVE_GATEWAY` | `InclusiveGatewayProcessor` | Fork: activa rutas con condición true / Join: espera activas |
-| Event-Based | `EVENT_BASED_GATEWAY` | `EventBasedGatewayProcessor` | Espera primer evento de N posibles |
+
+|    Elemento     |    BpmnElementType    |          Procesador          |                        Comportamiento                        |
+|-----------------|-----------------------|------------------------------|--------------------------------------------------------------|
+| Exclusive (XOR) | `EXCLUSIVE_GATEWAY`   | `ExclusiveGatewayProcessor`  | Evalúa condiciones, toma UNA ruta                            |
+| Parallel (AND)  | `PARALLEL_GATEWAY`    | `ParallelGatewayProcessor`   | Fork: activa todas las rutas / Join: espera todas            |
+| Inclusive (OR)  | `INCLUSIVE_GATEWAY`   | `InclusiveGatewayProcessor`  | Fork: activa rutas con condición true / Join: espera activas |
+| Event-Based     | `EVENT_BASED_GATEWAY` | `EventBasedGatewayProcessor` | Espera primer evento de N posibles                           |
 
 ### Events
-| Elemento | BpmnElementType | Procesador | Comportamiento |
-|----------|----------------|-----------|---------------|
-| Start Event | `START_EVENT` | `StartEventProcessor` | Inicia el proceso |
-| End Event | `END_EVENT` | `EndEventProcessor` | Termina el flujo |
-| Intermediate Catch | `INTERMEDIATE_CATCH_EVENT` | `IntermediateCatchEventProcessor` | Espera evento |
-| Intermediate Throw | `INTERMEDIATE_THROW_EVENT` | `IntermediateThrowEventProcessor` | Lanza evento |
-| Boundary Event | `BOUNDARY_EVENT` | `BoundaryEventProcessor` | Evento en borde de tarea |
+
+|      Elemento      |      BpmnElementType       |            Procesador             |      Comportamiento      |
+|--------------------|----------------------------|-----------------------------------|--------------------------|
+| Start Event        | `START_EVENT`              | `StartEventProcessor`             | Inicia el proceso        |
+| End Event          | `END_EVENT`                | `EndEventProcessor`               | Termina el flujo         |
+| Intermediate Catch | `INTERMEDIATE_CATCH_EVENT` | `IntermediateCatchEventProcessor` | Espera evento            |
+| Intermediate Throw | `INTERMEDIATE_THROW_EVENT` | `IntermediateThrowEventProcessor` | Lanza evento             |
+| Boundary Event     | `BOUNDARY_EVENT`           | `BoundaryEventProcessor`          | Evento en borde de tarea |
 
 ### Containers
-| Elemento | BpmnElementType | Procesador | Comportamiento |
-|----------|----------------|-----------|---------------|
-| Process | `PROCESS` | `ProcessProcessor` | Proceso raíz |
-| Sub-Process | `SUB_PROCESS` | `SubProcessProcessor` | Subproceso embedded |
-| Event Sub-Process | `EVENT_SUB_PROCESS` | `EventSubProcessProcessor` | Activado por evento |
-| Multi-Instance | `MULTI_INSTANCE_BODY` | `MultiInstanceBodyProcessor` | Loop paralelo/secuencial |
-| Call Activity | `CALL_ACTIVITY` | `CallActivityProcessor` | Llama otro proceso |
+
+|     Elemento      |    BpmnElementType    |          Procesador          |      Comportamiento      |
+|-------------------|-----------------------|------------------------------|--------------------------|
+| Process           | `PROCESS`             | `ProcessProcessor`           | Proceso raíz             |
+| Sub-Process       | `SUB_PROCESS`         | `SubProcessProcessor`        | Subproceso embedded      |
+| Event Sub-Process | `EVENT_SUB_PROCESS`   | `EventSubProcessProcessor`   | Activado por evento      |
+| Multi-Instance    | `MULTI_INSTANCE_BODY` | `MultiInstanceBodyProcessor` | Loop paralelo/secuencial |
+| Call Activity     | `CALL_ACTIVITY`       | `CallActivityProcessor`      | Llama otro proceso       |
 
 ### Otros
-| Elemento | BpmnElementType | Descripción |
-|----------|----------------|-------------|
+
+|   Elemento    | BpmnElementType |       Descripción        |
+|---------------|-----------------|--------------------------|
 | Sequence Flow | `SEQUENCE_FLOW` | Conexión entre elementos |
 
 ## Ciclo de Vida de un Elemento BPMN
@@ -85,6 +90,7 @@ ACTIVATE_ELEMENT (siguiente)   ← cascada continúa
 ```
 
 ### Terminación (alternativa a completado)
+
 ```
 TERMINATE_ELEMENT (command)
        │
@@ -98,6 +104,7 @@ ELEMENT_TERMINATED (event)
 ## Ejecución Detallada por Tipo
 
 ### Service Task (el más común)
+
 ```
 1. ACTIVATE_ELEMENT
    └─ onActivate(): mapear variables de entrada (input mappings)
@@ -121,6 +128,7 @@ ELEMENT_TERMINATED (event)
 ```
 
 ### Exclusive Gateway (XOR)
+
 ```
 Activación:
 1. ACTIVATE_ELEMENT
@@ -135,6 +143,7 @@ Join:
 ```
 
 ### Parallel Gateway (AND)
+
 ```
 Fork:
 1. ACTIVATE_ELEMENT
@@ -152,6 +161,7 @@ Join:
 ```
 
 ### Timer Event
+
 ```
 Intermediate Catch Timer:
 1. ACTIVATE_ELEMENT
@@ -179,6 +189,7 @@ Boundary Timer (interrupting):
 ```
 
 ### Message Catch Event
+
 ```
 1. ACTIVATE_ELEMENT
    └─ Crear MessageSubscription (messageName + correlationKey)
@@ -190,6 +201,7 @@ Boundary Timer (interrupting):
 ```
 
 ### Sub-Process
+
 ```
 1. ACTIVATE_ELEMENT (SubProcess)
    └─ ELEMENT_ACTIVATING
@@ -205,6 +217,7 @@ Boundary Timer (interrupting):
 ```
 
 ### Multi-Instance
+
 ```
 Paralelo:
 1. ACTIVATE_ELEMENT (Multi-Instance Body)
@@ -226,6 +239,7 @@ Secuencial:
 ```
 
 ### Call Activity
+
 ```
 1. ACTIVATE_ELEMENT (Call Activity)
    └─ Buscar proceso hijo por bpmnProcessId
@@ -244,6 +258,7 @@ Secuencial:
 ## Variable Mappings
 
 ### Input Mappings (al activar)
+
 ```
 Definidos en BPMN:
 <zeebe:ioMapping>
@@ -258,6 +273,7 @@ Comportamiento:
 ```
 
 ### Output Mappings (al completar)
+
 ```
 <zeebe:ioMapping>
     <zeebe:output source="=result.status" target="paymentStatus" />
@@ -356,3 +372,4 @@ Proceso: Order Fulfillment
    └─ ACTIVATE End Event → COMPLETED
    └─ COMPLETE Process → PROCESS_INSTANCE_COMPLETED
 ```
+

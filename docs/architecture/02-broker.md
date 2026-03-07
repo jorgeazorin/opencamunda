@@ -97,12 +97,14 @@ BrokerCfg
 ## Particiones
 
 ### Concepto
+
 - Un broker gestiona N **particiones**
 - Cada partición tiene su propio log, estado (RocksDB), y stream processor
 - Cada partición tiene un **líder** (read/write) y **seguidores** (read, replican)
 - El líder se elige por **Raft consensus**
 
 ### Distribución
+
 ```
 Cluster de 3 nodos, 3 particiones, replication factor 3:
 
@@ -112,6 +114,7 @@ Nodo 2: Partición 1 (FOLLOWER)| Partición 2 (FOLLOWER)  | Partición 3 (LEADER
 ```
 
 ### Ciclo de Vida de una Partición
+
 ```
 1. Raft Group se forma entre los nodos
 2. Se elige un LEADER via Raft
@@ -126,9 +129,11 @@ Nodo 2: Partición 1 (FOLLOWER)| Partición 2 (FOLLOWER)  | Partición 3 (LEADER
 ```
 
 ### AtomixLogStorage - El puente Raft ↔ LogStream
+
 ```
 zeebe/broker/logstreams/AtomixLogStorage.java
 ```
+
 Adapta el log de Raft (Atomix) a la interfaz `LogStream` que usa el Stream Platform. Así el stream processor no sabe que debajo hay Raft.
 
 ## Health Checks
@@ -160,6 +165,7 @@ El `CommandApiServiceStep` configura backpressure usando **Netflix concurrency-l
 ## Exporters
 
 Los exporters se configuran en `BrokerCfg.exporters`:
+
 ```yaml
 exporters:
   elasticsearch:
@@ -244,10 +250,10 @@ El broker soporta streaming de jobs directamente a workers:
 
 ## Comunicación entre Nodos
 
-| Puerto | Protocolo | Uso |
-|--------|-----------|-----|
-| 26500 | gRPC | API pública (clientes) |
-| 26501 | Internal | Command API (gateway → broker) |
-| 26502 | Internal | Cluster internal (Raft replication, membership) |
+| Puerto | Protocolo |                       Uso                       |
+|--------|-----------|-------------------------------------------------|
+| 26500  | gRPC      | API pública (clientes)                          |
+| 26501  | Internal  | Command API (gateway → broker)                  |
+| 26502  | Internal  | Cluster internal (Raft replication, membership) |
 
 El transporte usa **Netty** con el framework **Atomix** para comunicación inter-nodo.

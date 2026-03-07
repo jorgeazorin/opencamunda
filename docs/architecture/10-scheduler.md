@@ -55,10 +55,10 @@ zeebe/scheduler/src/main/java/io/camunda/zeebe/scheduler/
 
 ### Asignación de Threads
 
-| Pool | Threads Default | Propósito | Ejemplo |
-|------|----------------|-----------|---------|
-| CPU-Bound | cores/2 | Actors sin I/O bloqueante | Engine, StreamProcessor |
-| I/O-Bound | cores×2 | Actors con I/O | Exporters, LogStorage |
+|   Pool    | Threads Default |         Propósito         |         Ejemplo         |
+|-----------|-----------------|---------------------------|-------------------------|
+| CPU-Bound | cores/2         | Actors sin I/O bloqueante | Engine, StreamProcessor |
+| I/O-Bound | cores×2         | Actors con I/O            | Exporters, LogStorage   |
 
 ## Ciclo de Vida de un Actor
 
@@ -223,6 +223,7 @@ Thread-1 "roba" una task de Thread-0:
 ## Garantías de Concurrencia
 
 ### Single-Threaded por Actor
+
 ```
 Actor A                    Actor B
 ┌───────────────┐         ┌───────────────┐
@@ -315,3 +316,4 @@ ActorScheduler.newActorScheduler()
 - **Per-actor**: task count, execution time, scheduling latency
 - **Global**: thread pool utilization, job queue depth
 - **Scoped**: Las métricas se etiquetan por nombre de actor
+
