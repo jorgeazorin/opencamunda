@@ -9,6 +9,7 @@ package io.camunda.zeebe.engine.processing.deployment.model.transformer.zeebe;
 
 import io.camunda.zeebe.engine.processing.deployment.model.element.ExecutableCalledDecision;
 import io.camunda.zeebe.engine.processing.deployment.model.transformation.TransformContext;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeBindingType;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeCalledDecision;
 
 public final class CalledDecisionTransformer {
@@ -30,5 +31,11 @@ public final class CalledDecisionTransformer {
 
     final var resultVariable = calledDecision.getResultVariable();
     executableElement.setResultVariable(resultVariable);
+
+    final var bindingType = calledDecision.getBindingType();
+    executableElement.setBindingType(bindingType != null ? bindingType : ZeebeBindingType.latest);
+
+    final var versionTag = calledDecision.getVersionTag();
+    executableElement.setVersionTag(versionTag);
   }
 }

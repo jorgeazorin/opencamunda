@@ -34,9 +34,11 @@ public final class DecisionRecord extends UnifiedRecordValue implements Decision
   private final BooleanProperty isDuplicateProp = new BooleanProperty("isDuplicate", false);
   private final StringProperty tenantIdProp =
       new StringProperty("tenantId", TenantOwned.DEFAULT_TENANT_IDENTIFIER);
+  private final LongProperty deploymentKeyProp = new LongProperty("deploymentKey", -1L);
+  private final StringProperty versionTagProp = new StringProperty("versionTag", "");
 
   public DecisionRecord() {
-    super(8);
+    super(10);
     declareProperty(decisionIdProp)
         .declareProperty(decisionNameProp)
         .declareProperty(versionProp)
@@ -44,7 +46,9 @@ public final class DecisionRecord extends UnifiedRecordValue implements Decision
         .declareProperty(decisionRequirementsIdProp)
         .declareProperty(decisionRequirementsKeyProp)
         .declareProperty(isDuplicateProp)
-        .declareProperty(tenantIdProp);
+        .declareProperty(tenantIdProp)
+        .declareProperty(deploymentKeyProp)
+        .declareProperty(versionTagProp);
   }
 
   @Override
@@ -139,6 +143,24 @@ public final class DecisionRecord extends UnifiedRecordValue implements Decision
 
   public DecisionRecord setTenantId(final String tenantId) {
     tenantIdProp.setValue(tenantId);
+    return this;
+  }
+
+  public long getDeploymentKey() {
+    return deploymentKeyProp.getValue();
+  }
+
+  public DecisionRecord setDeploymentKey(final long deploymentKey) {
+    deploymentKeyProp.setValue(deploymentKey);
+    return this;
+  }
+
+  public String getVersionTag() {
+    return bufferAsString(versionTagProp.getValue());
+  }
+
+  public DecisionRecord setVersionTag(final String versionTag) {
+    versionTagProp.setValue(versionTag);
     return this;
   }
 }

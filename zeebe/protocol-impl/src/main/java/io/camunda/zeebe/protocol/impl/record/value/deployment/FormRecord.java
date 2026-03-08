@@ -30,16 +30,20 @@ public final class FormRecord extends UnifiedRecordValue implements Form {
   private final BinaryProperty resourceProp = new BinaryProperty("resource", new UnsafeBuffer());
   private final StringProperty tenantIdProp =
       new StringProperty("tenantId", TenantOwned.DEFAULT_TENANT_IDENTIFIER);
+  private final LongProperty deploymentKeyProp = new LongProperty("deploymentKey", -1L);
+  private final StringProperty versionTagProp = new StringProperty("versionTag", "");
 
   public FormRecord() {
-    super(7);
+    super(9);
     declareProperty(formIdProp)
         .declareProperty(versionProp)
         .declareProperty(formKeyProp)
         .declareProperty(resourceNameProp)
         .declareProperty(checksumProp)
         .declareProperty(resourceProp)
-        .declareProperty(tenantIdProp);
+        .declareProperty(tenantIdProp)
+        .declareProperty(deploymentKeyProp)
+        .declareProperty(versionTagProp);
   }
 
   public FormRecord wrap(final FormMetadataRecord metadata, final byte[] resource) {
@@ -176,6 +180,24 @@ public final class FormRecord extends UnifiedRecordValue implements Form {
 
   public FormRecord setTenantId(final String tenantId) {
     tenantIdProp.setValue(tenantId);
+    return this;
+  }
+
+  public long getDeploymentKey() {
+    return deploymentKeyProp.getValue();
+  }
+
+  public FormRecord setDeploymentKey(final long deploymentKey) {
+    deploymentKeyProp.setValue(deploymentKey);
+    return this;
+  }
+
+  public String getVersionTag() {
+    return BufferUtil.bufferAsString(versionTagProp.getValue());
+  }
+
+  public FormRecord setVersionTag(final String versionTag) {
+    versionTagProp.setValue(versionTag);
     return this;
   }
 }

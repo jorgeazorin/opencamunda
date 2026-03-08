@@ -14,8 +14,11 @@ import io.camunda.zeebe.engine.EngineConfiguration;
 import io.camunda.zeebe.engine.Loggers;
 import io.camunda.zeebe.engine.processing.common.ExpressionProcessor;
 import io.camunda.zeebe.engine.processing.common.Failure;
+import io.camunda.zeebe.engine.processing.deployment.model.validation.BpmnDeploymentBindingValidator;
 import io.camunda.zeebe.engine.processing.streamprocessor.writers.StateWriter;
 import io.camunda.zeebe.engine.state.immutable.ProcessingState;
+import io.camunda.zeebe.model.bpmn.Bpmn;
+import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.protocol.impl.record.value.deployment.DeploymentRecord;
 import io.camunda.zeebe.protocol.impl.record.value.deployment.DeploymentResource;
 import io.camunda.zeebe.protocol.record.RejectionType;
@@ -109,6 +112,10 @@ public final class DeploymentTransformer {
       success &= transformResource(deploymentEvent, errors, deploymentResource);
     }
 
+    if (success) {
+      success = validateDeploymentBindings(deploymentEvent, errors);
+    }
+
     if (!success) {
       rejectionType = RejectionType.INVALID_ARGUMENT;
       rejectionReason =
@@ -161,6 +168,38 @@ public final class DeploymentTransformer {
         .map(Entry::getValue)
         .findFirst()
         .orElse(UNKNOWN_RESOURCE);
+  }
+
+  private boolean validateDeploymentBindings(
+      final DeploymentRecord deploymentEvent, final StringBuilder errors) {
+    final var bindingValidator = new BpmnDeploymentBindingValidator(deploymentEvent);
+    boolean valid = true;
+
+    for (final DeploymentResource resource : deploymentEvent.resources()) {
+      final String resourceName = resource.getResourceName();
+      if (!resourceName.endsWith(".bpmn") && !resourceName.endsWith(".xml")) {
+        continue;
+      }
+
+      final var model =
+          Bpmn.readModelFromStream(
+              new org.agrona.io.DirectBufferInputStream(resource.getResourceBuffer()));
+
+      final var elementsWithDeploymentBinding = new BpmnElementsWithDeploymentBinding();
+      for (final Process process : model.getDefinitions().getChildElementsByType(Process.class)) {
+        if (process.isExecutable()) {
+          elementsWithDeploymentBinding.addFromProcess(process);
+        }
+      }
+
+      final String validationError = bindingValidator.validate(elementsWithDeploymentBinding);
+      if (validationError != null) {
+        errors.append("\n'").append(resourceName).append("':\n").append(validationError);
+        valid = false;
+      }
+    }
+
+    return valid;
   }
 
   private static final class UnknownResourceTransformer implements DeploymentResourceTransformer {

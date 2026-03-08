@@ -186,10 +186,13 @@ public final class BpmnResourceTransformer implements DeploymentResourceTransfor
               .setKey(key)
               .setVersion(processState.getNextProcessVersion(bpmnProcessId, tenantId));
 
-          stateWriter.appendFollowUpEvent(
-              key,
-              ProcessIntent.CREATED,
-              new ProcessRecord().wrap(processMetadata, deploymentResource.getResource()));
+          final var processRecord =
+              new ProcessRecord().wrap(processMetadata, deploymentResource.getResource());
+          final String versionTag = process.getVersionTag();
+          if (versionTag != null && !versionTag.isEmpty()) {
+            processRecord.setVersionTag(versionTag);
+          }
+          stateWriter.appendFollowUpEvent(key, ProcessIntent.CREATED, processRecord);
         }
       }
     }

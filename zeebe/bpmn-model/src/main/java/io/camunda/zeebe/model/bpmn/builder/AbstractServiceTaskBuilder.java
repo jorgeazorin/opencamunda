@@ -18,6 +18,8 @@ package io.camunda.zeebe.model.bpmn.builder;
 
 import io.camunda.zeebe.model.bpmn.BpmnModelInstance;
 import io.camunda.zeebe.model.bpmn.instance.ServiceTask;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeLinkedResource;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeLinkedResources;
 import java.util.function.Consumer;
 
 /**
@@ -70,5 +72,16 @@ public abstract class AbstractServiceTaskBuilder<B extends AbstractServiceTaskBu
   public B zeebeExecutionListener(
       final Consumer<ExecutionListenerBuilder> executionListenerBuilderConsumer) {
     return zeebeExecutionListenersBuilder.zeebeExecutionListener(executionListenerBuilderConsumer);
+  }
+
+  public B zeebeLinkedResources(
+      final Consumer<LinkedResourceBuilder> linkedResourceBuilderConsumer) {
+    final ZeebeLinkedResources linkedResources =
+        getCreateSingleExtensionElement(ZeebeLinkedResources.class);
+    final ZeebeLinkedResource linkedResource =
+        createChild(linkedResources, ZeebeLinkedResource.class);
+    final LinkedResourceBuilder builder = new LinkedResourceBuilder(linkedResource);
+    linkedResourceBuilderConsumer.accept(builder);
+    return myself;
   }
 }

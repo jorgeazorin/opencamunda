@@ -61,4 +61,15 @@ public abstract class AbstractProcessBuilder<B extends AbstractProcessBuilder<B>
     element.setExecutable(true);
     return myself;
   }
+
+  /**
+   * Sets the version tag for this process.
+   *
+   * @param versionTag the version tag to set
+   * @return the builder object
+   */
+  public B versionTag(final String versionTag) {
+    element.setVersionTag(versionTag);
+    return myself;
+  }
 }

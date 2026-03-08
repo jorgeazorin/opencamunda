@@ -225,6 +225,8 @@ import io.camunda.zeebe.model.bpmn.impl.instance.zeebe.ZeebeFormDefinitionImpl;
 import io.camunda.zeebe.model.bpmn.impl.instance.zeebe.ZeebeHeaderImpl;
 import io.camunda.zeebe.model.bpmn.impl.instance.zeebe.ZeebeInputImpl;
 import io.camunda.zeebe.model.bpmn.impl.instance.zeebe.ZeebeIoMappingImpl;
+import io.camunda.zeebe.model.bpmn.impl.instance.zeebe.ZeebeLinkedResourceImpl;
+import io.camunda.zeebe.model.bpmn.impl.instance.zeebe.ZeebeLinkedResourcesImpl;
 import io.camunda.zeebe.model.bpmn.impl.instance.zeebe.ZeebeLoopCharacteristicsImpl;
 import io.camunda.zeebe.model.bpmn.impl.instance.zeebe.ZeebeOutputImpl;
 import io.camunda.zeebe.model.bpmn.impl.instance.zeebe.ZeebePropertiesImpl;
@@ -664,6 +666,8 @@ public class Bpmn {
     ZeebeUserTaskImpl.registerType(bpmnModelBuilder);
     ZeebeExecutionListenersImpl.registerType(bpmnModelBuilder);
     ZeebeExecutionListenerImpl.registerType(bpmnModelBuilder);
+    ZeebeLinkedResourcesImpl.registerType(bpmnModelBuilder);
+    ZeebeLinkedResourceImpl.registerType(bpmnModelBuilder);
   }
 
   /**

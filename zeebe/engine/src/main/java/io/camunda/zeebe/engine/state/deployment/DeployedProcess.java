@@ -52,6 +52,14 @@ public final class DeployedProcess {
     return persistedProcess.getTenantId();
   }
 
+  public long getDeploymentKey() {
+    return persistedProcess.getDeploymentKey();
+  }
+
+  public String getVersionTag() {
+    return persistedProcess.getVersionTag();
+  }
+
   @Override
   public String toString() {
     return "DeployedProcess{"

@@ -43,4 +43,18 @@ public interface MutableDecisionState extends DecisionState {
    * @param record the record of the decision requirements
    */
   void deleteDecisionRequirements(DecisionRequirementsRecord record);
+
+  void storeDecisionKeyByDecisionIdAndDeploymentKey(DecisionRecord record);
+
+  void storeDecisionKeyByDecisionIdAndVersionTag(DecisionRecord record);
+
+  void setMissingDeploymentKey(String tenantId, long decisionKey, long deploymentKey);
+
+  /**
+   * Adds a deployment-key lookup entry (CF83) mapping (decisionId, deploymentKey) → decisionKey
+   * without modifying the stored decision record. Used for duplicate decisions that are part of a
+   * new deployment.
+   */
+  void addDeploymentKeyMapping(
+      String tenantId, String decisionId, long decisionKey, long deploymentKey);
 }

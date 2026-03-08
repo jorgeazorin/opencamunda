@@ -32,16 +32,20 @@ public final class ProcessRecord extends UnifiedRecordValue implements Process {
   private final BinaryProperty resourceProp = new BinaryProperty("resource", new UnsafeBuffer());
   private final StringProperty tenantIdProp =
       new StringProperty("tenantId", TenantOwned.DEFAULT_TENANT_IDENTIFIER);
+  private final LongProperty deploymentKeyProp = new LongProperty("deploymentKey", -1L);
+  private final StringProperty versionTagProp = new StringProperty("versionTag", "");
 
   public ProcessRecord() {
-    super(7);
+    super(9);
     declareProperty(bpmnProcessIdProp)
         .declareProperty(versionProp)
         .declareProperty(keyProp)
         .declareProperty(resourceNameProp)
         .declareProperty(checksumProp)
         .declareProperty(resourceProp)
-        .declareProperty(tenantIdProp);
+        .declareProperty(tenantIdProp)
+        .declareProperty(deploymentKeyProp)
+        .declareProperty(versionTagProp);
   }
 
   public ProcessRecord wrap(final ProcessMetadata metadata, final byte[] resource) {
@@ -185,6 +189,24 @@ public final class ProcessRecord extends UnifiedRecordValue implements Process {
 
   public ProcessRecord setTenantId(final String tenantId) {
     tenantIdProp.setValue(tenantId);
+    return this;
+  }
+
+  public long getDeploymentKey() {
+    return deploymentKeyProp.getValue();
+  }
+
+  public ProcessRecord setDeploymentKey(final long deploymentKey) {
+    deploymentKeyProp.setValue(deploymentKey);
+    return this;
+  }
+
+  public String getVersionTag() {
+    return BufferUtil.bufferAsString(versionTagProp.getValue());
+  }
+
+  public ProcessRecord setVersionTag(final String versionTag) {
+    versionTagProp.setValue(versionTag);
     return this;
   }
 }

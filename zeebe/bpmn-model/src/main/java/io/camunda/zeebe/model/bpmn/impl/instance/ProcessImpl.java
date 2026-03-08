@@ -21,6 +21,7 @@ import static io.camunda.zeebe.model.bpmn.impl.BpmnModelConstants.BPMN_ATTRIBUTE
 import static io.camunda.zeebe.model.bpmn.impl.BpmnModelConstants.BPMN_ATTRIBUTE_IS_EXECUTABLE;
 import static io.camunda.zeebe.model.bpmn.impl.BpmnModelConstants.BPMN_ATTRIBUTE_PROCESS_TYPE;
 import static io.camunda.zeebe.model.bpmn.impl.BpmnModelConstants.BPMN_ELEMENT_PROCESS;
+import static io.camunda.zeebe.model.bpmn.impl.BpmnModelConstants.ZEEBE_NS;
 
 import io.camunda.zeebe.model.bpmn.BpmnModelInstance;
 import io.camunda.zeebe.model.bpmn.ProcessType;
@@ -35,6 +36,7 @@ import io.camunda.zeebe.model.bpmn.instance.Monitoring;
 import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.model.bpmn.instance.Property;
 import io.camunda.zeebe.model.bpmn.instance.ResourceRole;
+import io.camunda.zeebe.model.bpmn.impl.ZeebeConstants;
 import java.util.Collection;
 import org.camunda.bpm.model.xml.ModelBuilder;
 import org.camunda.bpm.model.xml.impl.instance.ModelTypeInstanceContext;
@@ -68,6 +70,7 @@ public class ProcessImpl extends CallableElementImpl implements Process {
   protected static ChildElementCollection<CorrelationSubscription>
       correlationSubscriptionCollection;
   protected static ElementReferenceCollection<Process, Supports> supportsCollection;
+  protected static Attribute<String> versionTagAttribute;
 
   public ProcessImpl(final ModelTypeInstanceContext context) {
     super(context);
@@ -123,6 +126,12 @@ public class ProcessImpl extends CallableElementImpl implements Process {
         sequenceBuilder
             .elementCollection(Supports.class)
             .qNameElementReferenceCollection(Process.class)
+            .build();
+
+    versionTagAttribute =
+        typeBuilder
+            .stringAttribute(ZeebeConstants.ATTRIBUTE_VERSION_TAG)
+            .namespace(ZEEBE_NS)
             .build();
 
     typeBuilder.build();
@@ -216,5 +225,15 @@ public class ProcessImpl extends CallableElementImpl implements Process {
   @Override
   public Collection<Process> getSupports() {
     return supportsCollection.getReferenceTargetElements(this);
+  }
+
+  @Override
+  public String getVersionTag() {
+    return versionTagAttribute.getValue(this);
+  }
+
+  @Override
+  public void setVersionTag(final String versionTag) {
+    versionTagAttribute.setValue(this, versionTag);
   }
 }

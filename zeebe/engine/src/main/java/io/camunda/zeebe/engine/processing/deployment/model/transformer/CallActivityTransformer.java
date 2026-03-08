@@ -13,6 +13,7 @@ import io.camunda.zeebe.engine.processing.deployment.model.element.ExecutablePro
 import io.camunda.zeebe.engine.processing.deployment.model.transformation.ModelElementTransformer;
 import io.camunda.zeebe.engine.processing.deployment.model.transformation.TransformContext;
 import io.camunda.zeebe.model.bpmn.instance.CallActivity;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeBindingType;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeCalledElement;
 
 public final class CallActivityTransformer implements ModelElementTransformer<CallActivity> {
@@ -52,5 +53,11 @@ public final class CallActivityTransformer implements ModelElementTransformer<Ca
     final var propagateAllParentVariablesEnabled =
         calledElement.isPropagateAllParentVariablesEnabled();
     callActivity.setPropagateAllParentVariablesEnabled(propagateAllParentVariablesEnabled);
+
+    final var bindingType = calledElement.getBindingType();
+    callActivity.setBindingType(bindingType != null ? bindingType : ZeebeBindingType.latest);
+
+    final var versionTag = calledElement.getVersionTag();
+    callActivity.setVersionTag(versionTag);
   }
 }

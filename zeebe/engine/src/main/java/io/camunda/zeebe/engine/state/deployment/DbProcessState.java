@@ -79,6 +79,22 @@ public final class DbProcessState implements MutableProcessState {
 
   private final VersionManager versionManager;
 
+  // CF82: [tenant id | process id | deployment key] => process definition key
+  private final DbLong dbDeploymentKey;
+  private final DbCompositeKey<DbString, DbLong> processIdAndDeploymentKey;
+  private final DbTenantAwareKey<DbCompositeKey<DbString, DbLong>>
+      tenantAwareProcessIdAndDeploymentKey;
+  private final ColumnFamily<DbTenantAwareKey<DbCompositeKey<DbString, DbLong>>, DbLong>
+      processKeyByProcessIdAndDeploymentKey;
+
+  // CF91: [tenant id | process id | version tag] => process definition key
+  private final DbString dbVersionTag;
+  private final DbCompositeKey<DbString, DbString> processIdAndVersionTag;
+  private final DbTenantAwareKey<DbCompositeKey<DbString, DbString>>
+      tenantAwareProcessIdAndVersionTag;
+  private final ColumnFamily<DbTenantAwareKey<DbCompositeKey<DbString, DbString>>, DbLong>
+      processKeyByProcessIdAndVersionTag;
+
   public DbProcessState(
       final ZeebeDb<ZbColumnFamilies> zeebeDb,
       final TransactionContext transactionContext,
@@ -128,6 +144,30 @@ public final class DbProcessState implements MutableProcessState {
             DEFAULT_VERSION_VALUE, zeebeDb, ZbColumnFamilies.PROCESS_VERSION, transactionContext);
     processesByTenantAndProcessIdAndVersionCache =
         CacheBuilder.newBuilder().maximumSize(config.getProcessCacheCapacity()).build();
+
+    // CF82
+    dbDeploymentKey = new DbLong();
+    processIdAndDeploymentKey = new DbCompositeKey<>(processId, dbDeploymentKey);
+    tenantAwareProcessIdAndDeploymentKey =
+        new DbTenantAwareKey<>(tenantIdKey, processIdAndDeploymentKey, PlacementType.PREFIX);
+    processKeyByProcessIdAndDeploymentKey =
+        zeebeDb.createColumnFamily(
+            ZbColumnFamilies.PROCESS_DEFINITION_KEY_BY_PROCESS_ID_AND_DEPLOYMENT_KEY,
+            transactionContext,
+            tenantAwareProcessIdAndDeploymentKey,
+            processDefinitionKey);
+
+    // CF91
+    dbVersionTag = new DbString();
+    processIdAndVersionTag = new DbCompositeKey<>(processId, dbVersionTag);
+    tenantAwareProcessIdAndVersionTag =
+        new DbTenantAwareKey<>(tenantIdKey, processIdAndVersionTag, PlacementType.PREFIX);
+    processKeyByProcessIdAndVersionTag =
+        zeebeDb.createColumnFamily(
+            ZbColumnFamilies.PROCESS_DEFINITION_KEY_BY_PROCESS_ID_AND_VERSION_TAG,
+            transactionContext,
+            tenantAwareProcessIdAndVersionTag,
+            processDefinitionKey);
   }
 
   @Override
@@ -180,6 +220,18 @@ public final class DbProcessState implements MutableProcessState {
 
     processColumnFamily.deleteExisting(tenantAwareProcessDefinitionKey);
     processByIdAndVersionColumnFamily.deleteExisting(tenantAwareProcessIdAndVersionKey);
+
+    // Delete from CF82 if deploymentKey is set
+    if (processRecord.getDeploymentKey() >= 0) {
+      dbDeploymentKey.wrapLong(processRecord.getDeploymentKey());
+      processKeyByProcessIdAndDeploymentKey.deleteIfExists(tenantAwareProcessIdAndDeploymentKey);
+    }
+
+    // Delete from CF91 if versionTag is set
+    if (processRecord.getVersionTag() != null && !processRecord.getVersionTag().isEmpty()) {
+      dbVersionTag.wrapString(processRecord.getVersionTag());
+      processKeyByProcessIdAndVersionTag.deleteIfExists(tenantAwareProcessIdAndVersionTag);
+    }
 
     final var tenantIdAndProcessIdAndVersion =
         new TenantIdAndProcessIdAndVersion(
@@ -376,6 +428,145 @@ public final class DbProcessState implements MutableProcessState {
     }
 
     return element;
+  }
+
+  @Override
+  public void storeProcessDefinitionKeyByProcessIdAndDeploymentKey(
+      final ProcessRecord processRecord) {
+    tenantIdKey.wrapString(processRecord.getTenantId());
+    processId.wrapBuffer(processRecord.getBpmnProcessIdBuffer());
+    dbDeploymentKey.wrapLong(processRecord.getDeploymentKey());
+    processDefinitionKey.wrapLong(processRecord.getProcessDefinitionKey());
+    processKeyByProcessIdAndDeploymentKey.upsert(
+        tenantAwareProcessIdAndDeploymentKey, processDefinitionKey);
+  }
+
+  @Override
+  public void storeProcessDefinitionKeyByProcessIdAndVersionTag(final ProcessRecord processRecord) {
+    final var versionTag = processRecord.getVersionTag();
+    if (versionTag == null || versionTag.isEmpty()) {
+      return;
+    }
+    tenantIdKey.wrapString(processRecord.getTenantId());
+    processId.wrapBuffer(processRecord.getBpmnProcessIdBuffer());
+    dbVersionTag.wrapString(versionTag);
+    processDefinitionKey.wrapLong(processRecord.getProcessDefinitionKey());
+    processKeyByProcessIdAndVersionTag.upsert(
+        tenantAwareProcessIdAndVersionTag, processDefinitionKey);
+  }
+
+  @Override
+  public void setMissingDeploymentKey(
+      final String tenantId, final long processDefKey, final long deploymentKey) {
+    tenantIdKey.wrapString(tenantId);
+    processDefinitionKey.wrapLong(processDefKey);
+    final var process = processColumnFamily.get(tenantAwareProcessDefinitionKey);
+    if (process == null) {
+      return;
+    }
+    process.setDeploymentKey(deploymentKey);
+    processColumnFamily.update(tenantAwareProcessDefinitionKey, process);
+
+    // also update in processByIdAndVersionColumnFamily
+    processId.wrapBuffer(process.getBpmnProcessId());
+    processVersion.wrapLong(process.getVersion());
+    final var processByVersion =
+        processByIdAndVersionColumnFamily.get(tenantAwareProcessIdAndVersionKey);
+    if (processByVersion != null) {
+      processByVersion.setDeploymentKey(deploymentKey);
+      processByIdAndVersionColumnFamily.update(tenantAwareProcessIdAndVersionKey, processByVersion);
+    }
+
+    // store the deployment key lookup in CF82
+    dbDeploymentKey.wrapLong(deploymentKey);
+    processDefinitionKey.wrapLong(processDefKey);
+    processKeyByProcessIdAndDeploymentKey.upsert(
+        tenantAwareProcessIdAndDeploymentKey, processDefinitionKey);
+
+    updateInMemoryState(process);
+  }
+
+  @Override
+  public void addDeploymentKeyMapping(
+      final String tenantId,
+      final String bpmnProcessId,
+      final long processDefKey,
+      final long deploymentKey) {
+    tenantIdKey.wrapString(tenantId);
+    processId.wrapString(bpmnProcessId);
+    dbDeploymentKey.wrapLong(deploymentKey);
+    processDefinitionKey.wrapLong(processDefKey);
+    processKeyByProcessIdAndDeploymentKey.upsert(
+        tenantAwareProcessIdAndDeploymentKey, processDefinitionKey);
+  }
+
+  @Override
+  public DeployedProcess getProcessByProcessIdAndDeploymentKey(
+      final DirectBuffer processIdBuffer, final long deploymentKey, final String tenantId) {
+    tenantIdKey.wrapString(tenantId);
+    processId.wrapBuffer(processIdBuffer);
+    dbDeploymentKey.wrapLong(deploymentKey);
+
+    final var storedKey =
+        processKeyByProcessIdAndDeploymentKey.get(tenantAwareProcessIdAndDeploymentKey);
+    if (storedKey == null) {
+      return null;
+    }
+    return getProcessByKeyAndTenant(storedKey.getValue(), tenantId);
+  }
+
+  @Override
+  public DeployedProcess getProcessByProcessIdAndVersionTag(
+      final DirectBuffer processIdBuffer, final String versionTag, final String tenantId) {
+    if (versionTag == null || versionTag.isEmpty()) {
+      return null;
+    }
+    tenantIdKey.wrapString(tenantId);
+    processId.wrapBuffer(processIdBuffer);
+    dbVersionTag.wrapString(versionTag);
+
+    final var storedKey = processKeyByProcessIdAndVersionTag.get(tenantAwareProcessIdAndVersionTag);
+    if (storedKey == null) {
+      return null;
+    }
+    return getProcessByKeyAndTenant(storedKey.getValue(), tenantId);
+  }
+
+  @Override
+  public void forEachProcess(
+      final ProcessIdentifier previousProcess, final PersistedProcessVisitor visitor) {
+    if (previousProcess != null) {
+      tenantIdKey.wrapString(previousProcess.tenantId());
+      processDefinitionKey.wrapLong(previousProcess.processDefinitionKey());
+      final boolean[] skippedFirst = {false};
+      processColumnFamily.whileTrue(
+          tenantAwareProcessDefinitionKey,
+          (key, process) -> {
+            if (!skippedFirst[0]) {
+              skippedFirst[0] = true;
+              return true;
+            }
+            return visitor.visit(process);
+          });
+    } else {
+      processColumnFamily.whileTrue((key, process) -> visitor.visit(process));
+    }
+  }
+
+  @Override
+  public void forEachProcessWithLatestVersion(final PersistedProcessVisitor visitor) {
+    // Collect the latest version for each processId/tenant combination and then visit those
+    processColumnFamily.whileTrue(
+        (key, process) -> {
+          final var bpmnProcessId = process.getBpmnProcessId();
+          final var tenantId = key.wrappedKey().toString();
+          final long latestVersion =
+              versionManager.getLatestResourceVersion(bpmnProcessId, tenantId);
+          if (process.getVersion() == latestVersion) {
+            return visitor.visit(process);
+          }
+          return true;
+        });
   }
 
   @Override
