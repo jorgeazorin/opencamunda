@@ -17,7 +17,6 @@ import io.camunda.zeebe.engine.processing.common.Failure;
 import io.camunda.zeebe.engine.processing.deployment.model.validation.BpmnDeploymentBindingValidator;
 import io.camunda.zeebe.engine.processing.streamprocessor.writers.StateWriter;
 import io.camunda.zeebe.engine.state.immutable.ProcessingState;
-import io.camunda.zeebe.model.bpmn.Bpmn;
 import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.protocol.impl.record.value.deployment.DeploymentRecord;
 import io.camunda.zeebe.protocol.impl.record.value.deployment.DeploymentResource;
@@ -41,6 +40,7 @@ public final class DeploymentTransformer {
       new UnknownResourceTransformer();
 
   private final Map<String, DeploymentResourceTransformer> resourceTransformers;
+  private final BpmnResourceTransformer bpmnResourceTransformer;
 
   private final MessageDigest digestGenerator;
   // internal changes during processing
@@ -75,6 +75,7 @@ public final class DeploymentTransformer {
             expressionProcessor,
             featureFlags.enableStraightThroughProcessingLoopDetector(),
             config);
+    this.bpmnResourceTransformer = bpmnResourceTransformer;
     final var dmnResourceTransformer =
         new DmnResourceTransformer(
             keyGenerator, stateWriter, this::getChecksum, processingState.getDecisionState());
@@ -96,6 +97,7 @@ public final class DeploymentTransformer {
   }
 
   public Either<Failure, Void> transform(final DeploymentRecord deploymentEvent) {
+    bpmnResourceTransformer.clearParsedModels();
     final StringBuilder errors = new StringBuilder();
     boolean success = true;
 
@@ -181,9 +183,7 @@ public final class DeploymentTransformer {
         continue;
       }
 
-      final var model =
-          Bpmn.readModelFromStream(
-              new org.agrona.io.DirectBufferInputStream(resource.getResourceBuffer()));
+      final var model = bpmnResourceTransformer.getParsedModel(resourceName);
 
       final var elementsWithDeploymentBinding = new BpmnElementsWithDeploymentBinding();
       for (final Process process : model.getDefinitions().getChildElementsByType(Process.class)) {

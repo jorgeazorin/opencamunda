@@ -95,11 +95,6 @@ public class ZeebeConstants {
 
   public static final String ATTRIBUTE_BINDING_TYPE = "bindingType";
   public static final String ATTRIBUTE_VERSION_TAG = "versionTag";
-  public static final String ELEMENT_LINKED_RESOURCE = "linkedResource";
-  public static final String ELEMENT_LINKED_RESOURCES = "linkedResources";
-  public static final String ATTRIBUTE_RESOURCE_ID = "resourceId";
-  public static final String ATTRIBUTE_RESOURCE_TYPE = "resourceType";
-  public static final String ATTRIBUTE_LINK_NAME = "linkName";
 
   /** Form key format used for camunda-forms format */
   public static final String USER_TASK_FORM_KEY_CAMUNDA_FORMS_FORMAT = "camunda-forms";

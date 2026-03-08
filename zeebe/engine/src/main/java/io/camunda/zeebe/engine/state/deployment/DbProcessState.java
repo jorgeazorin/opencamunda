@@ -554,22 +554,6 @@ public final class DbProcessState implements MutableProcessState {
   }
 
   @Override
-  public void forEachProcessWithLatestVersion(final PersistedProcessVisitor visitor) {
-    // Collect the latest version for each processId/tenant combination and then visit those
-    processColumnFamily.whileTrue(
-        (key, process) -> {
-          final var bpmnProcessId = process.getBpmnProcessId();
-          final var tenantId = key.wrappedKey().toString();
-          final long latestVersion =
-              versionManager.getLatestResourceVersion(bpmnProcessId, tenantId);
-          if (process.getVersion() == latestVersion) {
-            return visitor.visit(process);
-          }
-          return true;
-        });
-  }
-
-  @Override
   public void clearCache() {
     processByTenantAndKeyCache.invalidateAll();
     processesByTenantAndProcessIdAndVersionCache.invalidateAll();

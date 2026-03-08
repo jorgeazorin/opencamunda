@@ -31,6 +31,8 @@ import io.camunda.zeebe.stream.api.state.KeyGenerator;
 import io.camunda.zeebe.util.Either;
 import io.camunda.zeebe.util.buffer.BufferUtil;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 import org.agrona.DirectBuffer;
 import org.agrona.io.DirectBufferInputStream;
@@ -47,6 +49,7 @@ public final class BpmnResourceTransformer implements DeploymentResourceTransfor
   private final BpmnValidator validator;
   private final ProcessState processState;
   private final boolean enableStraightThroughProcessingLoopDetector;
+  private final Map<String, BpmnModelInstance> parsedModels = new HashMap<>();
 
   public BpmnResourceTransformer(
       final KeyGenerator keyGenerator,
@@ -73,6 +76,7 @@ public final class BpmnResourceTransformer implements DeploymentResourceTransfor
     return readProcessDefinition(resource)
         .flatMap(
             definition -> {
+              parsedModels.put(resource.getResourceName(), definition);
               final String validationError = validator.validate(definition);
 
               if (validationError == null) {
@@ -207,5 +211,13 @@ public final class BpmnResourceTransformer implements DeploymentResourceTransfor
         && lastProcess != null
         && lastVersionDigest.equals(resourceDigest)
         && lastProcess.getResourceName().equals(deploymentResource.getResourceNameBuffer());
+  }
+
+  BpmnModelInstance getParsedModel(final String resourceName) {
+    return parsedModels.get(resourceName);
+  }
+
+  void clearParsedModels() {
+    parsedModels.clear();
   }
 }

@@ -23,7 +23,6 @@ import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeCalledDecision;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeCalledElement;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeExecutionListener;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeFormDefinition;
-import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeLinkedResource;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeLoopCharacteristics;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebePublishMessage;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeScript;
@@ -102,11 +101,6 @@ public final class ZeebeDesignTimeValidators {
     validators.add(new ZeebeBindingTypeValidator<>(ZeebeCalledElement.class));
     validators.add(new ZeebeBindingTypeValidator<>(ZeebeCalledDecision.class));
     validators.add(new ZeebeBindingTypeValidator<>(ZeebeFormDefinition.class));
-    validators.add(new ZeebeBindingTypeValidator<>(ZeebeLinkedResource.class));
-    validators.add(
-        ZeebeElementValidator.verifyThat(ZeebeLinkedResource.class)
-            .hasNonEmptyAttribute(
-                ZeebeLinkedResource::getResourceId, ZeebeConstants.ATTRIBUTE_RESOURCE_ID));
     validators.add(new ZeebeUserTaskFormValidator());
     validators.add(
         ZeebeElementValidator.verifyThat(ZeebeCalledDecision.class)

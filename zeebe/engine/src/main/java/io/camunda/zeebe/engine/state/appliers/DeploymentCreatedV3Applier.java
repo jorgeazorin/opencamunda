@@ -46,7 +46,8 @@ public class DeploymentCreatedV3Applier
   }
 
   private void setDeploymentKeyOnResources(final long deploymentKey, final DeploymentRecord value) {
-    value.processesMetadata().stream()
+    value
+        .processesMetadata()
         .forEach(
             metadata -> {
               if (metadata.isDuplicate()) {
@@ -61,7 +62,8 @@ public class DeploymentCreatedV3Applier
               }
             });
 
-    value.decisionsMetadata().stream()
+    value
+        .decisionsMetadata()
         .forEach(
             metadata -> {
               if (metadata.isDuplicate()) {
@@ -76,7 +78,8 @@ public class DeploymentCreatedV3Applier
               }
             });
 
-    value.formMetadata().stream()
+    value
+        .formMetadata()
         .forEach(
             metadata -> {
               if (metadata.isDuplicate()) {

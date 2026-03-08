@@ -148,6 +148,19 @@ public class DbFormState implements MutableFormState {
     formsByKey.deleteExisting(tenantAwareFormKey);
     formsByTenantIdAndIdCache.invalidate(
         new TenantIdAndFormId(record.getTenantId(), record.getFormId()));
+
+    // Delete from CF84 if deploymentKey is set
+    dbFormId.wrapString(record.getFormId());
+    if (record.getDeploymentKey() >= 0) {
+      dbDeploymentKey.wrapLong(record.getDeploymentKey());
+      formKeyByFormIdAndDeploymentKey.deleteIfExists(tenantAwareFormIdAndDeploymentKey);
+    }
+
+    // Delete from CF93 if versionTag is set
+    if (record.getVersionTag() != null && !record.getVersionTag().isEmpty()) {
+      dbVersionTag.wrapString(record.getVersionTag());
+      formKeyByFormIdAndVersionTag.deleteIfExists(tenantAwareFormIdAndVersionTag);
+    }
   }
 
   @Override
