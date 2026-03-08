@@ -502,15 +502,15 @@ public final class BrokerCfgTest {
   public void shouldReadExporterConfigWithMinimalInfo() {
     // given
     final ExporterCfg expected = new ExporterCfg();
-    expected.setClassName("io.camunda.zeebe.exporter.ElasticsearchExporter");
+    expected.setClassName("io.camunda.zeebe.exporter.test.ExporterTestHarness");
 
     final BrokerCfg actual = TestConfigReader.readConfig("exporters", environment);
 
     // then
     assertThat(actual.getExporters())
         .hasSize(1)
-        .containsKey("elasticsearch")
-        .containsEntry("elasticsearch", expected);
+        .containsKey("myexporter")
+        .containsEntry("myexporter", expected);
   }
 
   @Test

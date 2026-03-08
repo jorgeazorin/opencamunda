@@ -114,28 +114,6 @@ ActorFuture<Void> resumeExporting();     // Reanudar
 ActorFuture<ExporterPhase> getPhase();   // Estado actual
 ```
 
-## Implementaciones de Exporters
-
-### OpenSearch Exporter
-
-```
-zeebe/exporters/opensearch-exporter/
-├── OpensearchExporter.java         ← Implementa Exporter
-├── OpensearchClient.java           ← Cliente REST para OpenSearch
-├── RecordIndexRouter.java          ← Rutea records a índices por tipo
-└── template/                       ← Templates de índices
-```
-
-Características:
-- **Bulk requests**: Agrupa records en lotes (max 100MB)
-- **Index naming**: Records van a índices por tipo (ej: `zeebe-record-job`)
-- **Templates**: Define mappings de OpenSearch por cada ValueType
-- **Metadata**: Persiste posición en metadata del Controller
-
-### Elasticsearch Exporter
-
-Similar al de OpenSearch (también en `zeebe/exporters/`), adaptado para Elasticsearch.
-
 ## Flujo Completo: Record → Export
 
 ```
@@ -154,8 +132,8 @@ Similar al de OpenSearch (también en `zeebe/exporters/`), adaptado para Elastic
 6. Para cada ExporterContainer:
    ↓
 7. exporter.export(record)
-   ├─ OpensearchExporter añade a bulk buffer
-   ├─ Si buffer lleno o timeout: flush → bulk request a OpenSearch
+   ├─ Exporter añade a bulk buffer
+   ├─ Si buffer lleno o timeout: flush → envía al destino
    └─ exporter.controller.updateLastExportedRecordPosition(42500)
    ↓
 8. ExporterDirector persiste posición 42500 en ExportersState (ZeebeDb)
@@ -165,21 +143,18 @@ Similar al de OpenSearch (también en `zeebe/exporters/`), adaptado para Elastic
 
 ## Configuración
 
-En `application.yaml` del broker:
+Los exporters se configuran en `application.yaml` del broker. Las implementaciones concretas
+(Elasticsearch, OpenSearch, etc.) se encuentran en un repositorio separado y se añaden como
+dependencias externas al classpath.
 
 ```yaml
 zeebe:
   broker:
     exporters:
-      opensearch:
-        className: io.camunda.zeebe.exporter.opensearch.OpensearchExporter
+      myexporter:
+        className: com.example.MyExporter
         args:
           url: "http://localhost:9200"
-          bulk:
-            size: 100    # MB máximo por bulk
-            delay: 5     # segundos entre flushes
-          index:
-            prefix: "zeebe-record"
 ```
 
 ### Filtrado de Records

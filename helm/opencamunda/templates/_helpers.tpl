@@ -29,14 +29,6 @@ app.kubernetes.io/component: zeebe-gateway
 {{- end }}
 
 {{/*
-Elasticsearch labels
-*/}}
-{{- define "opencamunda.elasticsearch.labels" -}}
-{{ include "opencamunda.labels" . }}
-app.kubernetes.io/component: elasticsearch
-{{- end }}
-
-{{/*
 Zeebe image
 */}}
 {{- define "opencamunda.zeebe.image" -}}
@@ -65,13 +57,3 @@ Zeebe cluster name
 {{ .Release.Name }}-zeebe
 {{- end }}
 
-{{/*
-Elasticsearch URL
-*/}}
-{{- define "opencamunda.elasticsearch.url" -}}
-{{- if and .Values.exporter.elasticsearch.url (ne .Values.exporter.elasticsearch.url "") -}}
-{{ .Values.exporter.elasticsearch.url }}
-{{- else -}}
-http://{{ .Release.Name }}-elasticsearch:9200
-{{- end -}}
-{{- end }}

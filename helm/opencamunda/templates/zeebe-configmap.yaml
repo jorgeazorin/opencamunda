@@ -25,15 +25,7 @@ data:
             {{- range $i := until (int .Values.zeebe.clusterSize) }}
             - {{ include "opencamunda.zeebe.clusterName" $ }}-{{ $i }}.{{ include "opencamunda.zeebe.clusterName" $ }}:{{ $.Values.zeebe.service.internalPort }}
             {{- end }}
-        {{- if and .Values.exporter.elasticsearch.enabled .Values.elasticsearch.enabled }}
-        exporters:
-          elasticsearch:
-            className: io.camunda.zeebe.exporter.ElasticsearchExporter
-            args:
-              url: {{ include "opencamunda.elasticsearch.url" . }}
-              bulk:
-                size: 1
-        {{- end }}
+
   {{- end }}
   {{- range $name, $content := .Values.zeebe.extraConfiguration }}
   {{ $name }}: |

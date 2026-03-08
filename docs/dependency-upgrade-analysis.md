@@ -72,7 +72,7 @@ reestructuración modular completa del ecosistema Spring y el salto a Jakarta EE
    - Auto-configuración migrada de `RestClient` a `Rest5Client`.
    - `RestClientBuilderCustomizer` → `Rest5ClientBuilderCustomizer`.
    - `org.elasticsearch.client:elasticsearch-rest-client` ya no se gestiona.
-   - **Impacto:** ALTO. El exporter de Elasticsearch (`zeebe-elasticsearch-exporter`) se ve directamente afectado.
+   - **Impacto:** BAJO. Los exporters de Elasticsearch/OpenSearch se han movido a un repositorio separado.
 
 7. **Spring Security 7.0:**
    - Cambios significativos en configuración de seguridad.
@@ -123,25 +123,12 @@ reestructuración modular completa del ecosistema Spring y el salto a Jakarta EE
 | **Complejidad** | BAJA |
 | **Notas** | Ya está en una versión muy reciente. Mantener actualizado con patches menores. Se usa para el transport layer del cluster. |
 
-### 2.5 Elasticsearch Client
+### 2.5 Elasticsearch Client / OpenSearch Client
 
-| | |
-|---|---|
-| **Actual** | 8.9.2 |
-| **Última estable** | 8.17.x |
-| **Complejidad** | MEDIA-ALTA |
-| **Notas** | El salto de 8.9 a 8.17 puede incluir cambios de API en el Java client. El módulo `zeebe-elasticsearch-exporter` y `zeebe-exporter-test` se ven afectados directamente. Si se migra a Spring Boot 4.0, el módulo `elasticsearch-rest-client` desaparece, forzando el uso de `Rest5Client`. |
+Los clientes de Elasticsearch y OpenSearch ya no forman parte de este repositorio.
+Los exporters que los utilizan se han movido a un repositorio separado.
 
-### 2.6 OpenSearch Client
-
-| | |
-|---|---|
-| **Actual** | 2.5.0 |
-| **Última estable** | 2.19.x |
-| **Complejidad** | MEDIA |
-| **Notas** | Gran salto de versión. Afecta a `zeebe-opensearch-exporter`. Revisar changelog para breaking changes en el Java client. |
-
-### 2.7 RocksDB JNI
+### 2.6 RocksDB JNI
 
 | | |
 |---|---|
@@ -150,7 +137,7 @@ reestructuración modular completa del ecosistema Spring y el salto a Jakarta EE
 | **Complejidad** | BAJA (patch) / MEDIA (9.x) |
 | **Notas** | Componente crítico para el state store (zb-db). RocksDB 9.x puede incluir cambios de API en el JNI binding. Recomendable verificar retrocompatibilidad del formato de datos. Tests intensivos necesarios. |
 
-### 2.8 Micrometer
+### 2.7 Micrometer
 
 | | |
 |---|---|
@@ -159,7 +146,7 @@ reestructuración modular completa del ecosistema Spring y el salto a Jakarta EE
 | **Complejidad** | BAJA (1.15) / MEDIA (2.0 con Spring Boot 4) |
 | **Notas** | Micrometer 2.0 viene con Spring Boot 4.0. Para Spring Boot 3.x, mantenerse en la serie 1.x. |
 
-### 2.9 Testcontainers
+### 2.8 Testcontainers
 
 | | |
 |---|---|
@@ -168,7 +155,7 @@ reestructuración modular completa del ecosistema Spring y el salto a Jakarta EE
 | **Complejidad** | BAJA |
 | **Notas** | Actualización retrocompatible. Mejoras en soporte para contenedores más nuevos. |
 
-### 2.10 JUnit 5
+### 2.9 JUnit 5
 
 | | |
 |---|---|
@@ -177,7 +164,7 @@ reestructuración modular completa del ecosistema Spring y el salto a Jakarta EE
 | **Complejidad** | BAJA |
 | **Notas** | Actualización menor. Nuevas APIs pero todas retrocompatibles. |
 
-### 2.11 Mockito
+### 2.10 Mockito
 
 | | |
 |---|---|

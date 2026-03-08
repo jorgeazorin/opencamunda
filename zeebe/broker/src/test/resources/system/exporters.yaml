@@ -3,5 +3,5 @@ zeebe:
     exporting:
       skipRecords: 112233, 445566
     exporters:
-      elasticsearch:
-        className: io.camunda.zeebe.exporter.ElasticsearchExporter
+      myexporter:
+        className: io.camunda.zeebe.exporter.test.ExporterTestHarness

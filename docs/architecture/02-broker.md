@@ -164,16 +164,15 @@ El `CommandApiServiceStep` configura backpressure usando **Netflix concurrency-l
 
 ## Exporters
 
-Los exporters se configuran en `BrokerCfg.exporters`:
+Los exporters se configuran en `BrokerCfg.exporters`. Las implementaciones concretas
+(Elasticsearch, OpenSearch, etc.) se encuentran en un repositorio separado.
 
 ```yaml
 exporters:
-  elasticsearch:
-    className: io.camunda.zeebe.exporter.ElasticsearchExporter
+  myexporter:
+    className: com.example.MyExporter
     args:
       url: http://localhost:9200
-      index:
-        prefix: zeebe-record
 ```
 
 El broker gestiona:

@@ -181,42 +181,6 @@ zeebeGateway:
   affinity: {}
 
 # =============================================================================
-# Elasticsearch Configuration
-# =============================================================================
-elasticsearch:
-  # -- Enable bundled Elasticsearch
-  enabled: true
-  # -- Elasticsearch URL (used if enabled=false for external ES)
-  url: "http://{{ .Release.Name }}-elasticsearch:9200"
-  image:
-    repository: docker.elastic.co/elasticsearch/elasticsearch
-    tag: "8.9.2"
-    pullPolicy: IfNotPresent
-  replicas: 1
-  resources:
-    requests:
-      cpu: 1
-      memory: 2Gi
-    limits:
-      cpu: 2
-      memory: 2Gi
-  # -- Persistent volume claim size
-  pvcSize: 30Gi
-  pvcStorageClassName: ""
-  # -- JVM heap size
-  heapSize: 1024m
-
-# =============================================================================
-# Exporter Configuration
-# =============================================================================
-exporter:
-  elasticsearch:
-    # -- Enable Elasticsearch exporter
-    enabled: true
-    # -- Elasticsearch URL override (defaults to elasticsearch.url)
-    url: ""
-
-# =============================================================================
 # Ingress Configuration
 # =============================================================================
 ingress:

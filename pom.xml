@@ -45,8 +45,6 @@
     <module>zeebe/exporter-api</module>
     <module>zeebe/exporter-test</module>
     <module>zeebe/protocol-asserts</module>
-    <module>zeebe/exporters/elasticsearch-exporter</module>
-    <module>zeebe/exporters/opensearch-exporter</module>
     <module>zeebe/protocol-impl</module>
     <module>zeebe/protocol-jackson</module>
     <module>zeebe/zb-db</module>

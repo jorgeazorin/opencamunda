@@ -18,11 +18,10 @@ This document contains instructions for developers who want to contribute to thi
 Generally, you'll need to do the following things:
 1. [Expand our `protocol` with a new `RecordValue`](#expanding-our-protocol-with-a-new-recordvalue).
 2. [Implement this `RecordValue` in the `protocol-impl` module](#implement-a-new-recordvalue-in-protocol-impl).
-3. Support this `RecordValue` in the [Elasticsearch exporter](#support-a-recordvalue-in-the-elasticsearch-exporter) and [Opensearch exporter](#support-a-recordvalue-in-the-opensearch-exporter).
-4. [Extend the official exporter documentation](#extend-official-documentation).
-5. [Support the new `ValueType` in Zeebe Process Test (ZPT)](#extend-zeebe-process-test).
-6. [Ensure that the new `ValueType` is processed](#add-valuetype-to-supported-types).
-7. Add support for it to the [CompactRecordLogger](../test-util/src/main/java/io/camunda/zeebe/test/util/record/CompactRecordLogger.java).
+3. [Extend the official exporter documentation](#extend-official-documentation).
+4. [Support the new `ValueType` in Zeebe Process Test (ZPT)](#extend-zeebe-process-test).
+5. [Ensure that the new `ValueType` is processed](#add-valuetype-to-supported-types).
+6. Add support for it to the [CompactRecordLogger](../test-util/src/main/java/io/camunda/zeebe/test/util/record/CompactRecordLogger.java).
 
 ### Expanding our protocol with a new RecordValue
 
@@ -65,38 +64,10 @@ Please have a look at [Message Versioning](https://github.com/real-logic/simple-
 
 3. Add the new `Record` to the broker's [CommandApiRequestReader](../broker/src/main/java/io/camunda/zeebe/broker/transport/commandapi/CommandApiRequestReader.java)'s `RECORDS_BY_TYPE` mapping.
 
-### Support a RecordValue in the Elasticsearch exporter
-
-You'll always need to add support for new records in the ES exporter. Even if you don't yet want to export a new record, our tests will fail if you don't provide this support. Note that in step 3 below, you can choose whether or not the record is exported to ES by default.
-
-1. Add a record template to the elastic search exporter's [resources](../exporters/elasticsearch-exporter/src/main/resources/).
-
-- Tip: start by copying an existing template and change the relevant properties.
-
-2. Add a call to `createValueIndexTemplate` for the `ValueType` in [ElasticsearchExporter](../exporters/elasticsearch-exporter/src/main/java/io/camunda/zeebe/exporter/ElasticsearchExporter.java).
-3. Allow the record to be filtered through the [configuration](../exporters/elasticsearch-exporter/src/main/java/io/camunda/zeebe/exporter/ElasticsearchExporterConfiguration.java).
-4. Document this new filter option in the dist folder's [broker config templates](../dist/src/main/config/).
-5. Add a mapping for the ValueType to the [TestSupport](../exporters/elasticsearch-exporter/src/test/java/io/camunda/zeebe/exporter/TestSupport.java).
-
-### Support a RecordValue in the Opensearch exporter
-
-You'll always need to add support for new records in the OS exporter. Even if you don't yet want to export a new record,
-our tests will fail if you don't provide this support. Note that in step 3 below, you can choose whether or not the record is exported to OS by default.
-
-1. Add a record template to the exporter's [resources](../exporters/opensearch-exporter/src/main/resources/).
-
-- Tip: start by copying an existing template and change the relevant properties.
-
-2. Add a call to `createValueIndexTemplate` for the `ValueType` in [OpensearchExporter](../exporters/opensearch-exporter/src/main/java/io/camunda/zeebe/exporter/opensearch/OpensearchExporter.java).
-3. Allow the record to be filtered through the [configuration](../exporters/opensearch-exporter/src/main/java/io/camunda/zeebe/exporter/opensearch/OpensearchExporterConfiguration.java).
-4. Document this new filter option in the dist folder's [broker config templates](../dist/src/main/config/).
-5. Add a mapping for the ValueType to the [TestSupport](../exporters/opensearch-exporter/src/test/java/io/camunda/zeebe/exporter/opensearch/TestSupport.java).
-
 ### Extend official documentation
 
-Our Exporter configurations are documented in the [official docs](https://github.com/camunda/camunda-platform-docs).
-In the previous steps we've extended the configuration of the Elasticsearch and OpenSearch exporters.
-These configurations options need to be added to the official documentation.
+Exporter configurations are documented in the [official docs](https://github.com/camunda/camunda-platform-docs).
+If you add a new record type, its configuration options need to be added to the official documentation.
 
 ### Extend Zeebe Process Test
 
