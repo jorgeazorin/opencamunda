@@ -367,6 +367,8 @@ final class JsonSerializableToJsonTest {
               "decisionName": "decision-name",
               "decisionKey": 2,
               "duplicate": true,
+              "deploymentKey": -1,
+              "versionTag": "",
               "tenantId": "<default>"
             }
           ],
@@ -469,6 +471,8 @@ final class JsonSerializableToJsonTest {
           "processDefinitionKey": 123,
           "resourceName": "resource",
           "duplicate": false,
+          "deploymentKey": -1,
+          "versionTag": "",
           "tenantId": "<default>"
         }
         """
@@ -1501,6 +1505,8 @@ final class JsonSerializableToJsonTest {
           "decisionRequirementsKey": 3,
           "decisionRequirementsId": "decision-requirements-id",
           "duplicate": false,
+          "deploymentKey": -1,
+          "versionTag": "",
           "tenantId": "<default>"
         }
         """
