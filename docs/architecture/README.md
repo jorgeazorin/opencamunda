@@ -60,6 +60,7 @@ Esta documentación tiene como objetivo que **cualquier persona o agente de IA**
 - [29-how-to-modify-state.md](29-how-to-modify-state.md) - Cómo modificar el estado del engine
 - [30-development-workflow.md](30-development-workflow.md) - Flujo de desarrollo, convenciones, herramientas
 - [31-gateway-embedded-vs-standalone.md](31-gateway-embedded-vs-standalone.md) - Gateway embebido vs standalone: configuración, arranque, diferencias
+- [32-backup-restore-limitations.md](32-backup-restore-limitations.md) - Limitaciones del backup/restore: estado presente, pérdida de datos, recomendaciones
 
 ## Estado de la Documentación
 
@@ -96,6 +97,8 @@ Esta documentación tiene como objetivo que **cualquier persona o agente de IA**
 | 28-how-to-add-exporter      | ✅ Completado | P2 - Medio   |
 | 29-how-to-modify-state      | ✅ Completado | P2 - Medio   |
 | 30-development-workflow     | ✅ Completado | P1 - Alto    |
+| 31-gateway-embedded-vs-standalone | ✅ Completado | P2 - Medio |
+| 32-backup-restore-limitations | ✅ Completado | P2 - Medio |
 
 ## Orden de Trabajo Recomendado
 
