@@ -74,6 +74,7 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.Future;
 import java.net.ConnectException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -730,7 +731,14 @@ public final class NettyMessagingService implements ManagedMessagingService {
    */
   private CompletableFuture<Channel> bootstrapClient(final Address address) {
     final CompletableFuture<Channel> future = new OrderedFuture<>();
-    final InetSocketAddress socketAddress = address.socketAddress();
+    // Pre-resolve the address using Java's built-in resolver, which supports mDNS
+    // for .local domains on macOS. Netty's DnsAddressResolverGroup only uses standard
+    // DNS and cannot resolve .local hostnames (returns NXDOMAIN).
+    final InetAddress resolved = address.tryResolveAddress();
+    final InetSocketAddress socketAddress =
+        resolved != null
+            ? new InetSocketAddress(resolved, address.port())
+            : address.socketAddress();
 
     final Bootstrap bootstrap = new Bootstrap();
     bootstrap.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
