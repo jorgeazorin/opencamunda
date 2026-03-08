@@ -25,5 +25,6 @@ public class FormCreatedApplier implements TypedEventApplier<FormIntent, FormRec
     formState.storeFormInFormColumnFamily(value);
     formState.storeFormInFormByIdAndVersionColumnFamily(value);
     formState.updateLatestVersion(value);
+    formState.storeFormKeyByFormIdAndVersionTag(value);
   }
 }

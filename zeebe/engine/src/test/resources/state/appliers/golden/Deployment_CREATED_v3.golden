@@ -7,17 +7,12 @@
  */
 package io.camunda.zeebe.engine.state.appliers;
 
-import static java.util.function.Predicate.not;
-
 import io.camunda.zeebe.engine.state.TypedEventApplier;
 import io.camunda.zeebe.engine.state.mutable.MutableDecisionState;
 import io.camunda.zeebe.engine.state.mutable.MutableDeploymentState;
 import io.camunda.zeebe.engine.state.mutable.MutableFormState;
 import io.camunda.zeebe.engine.state.mutable.MutableProcessState;
-import io.camunda.zeebe.protocol.impl.record.value.deployment.DecisionRecord;
 import io.camunda.zeebe.protocol.impl.record.value.deployment.DeploymentRecord;
-import io.camunda.zeebe.protocol.impl.record.value.deployment.FormMetadataRecord;
-import io.camunda.zeebe.protocol.impl.record.value.deployment.ProcessMetadata;
 import io.camunda.zeebe.protocol.record.intent.DeploymentIntent;
 
 /**
@@ -51,25 +46,52 @@ public class DeploymentCreatedV3Applier
   }
 
   private void setDeploymentKeyOnResources(final long deploymentKey, final DeploymentRecord value) {
-    value.processesMetadata().stream()
-        .filter(not(ProcessMetadata::isDuplicate))
+    value
+        .processesMetadata()
         .forEach(
-            metadata ->
+            metadata -> {
+              if (metadata.isDuplicate()) {
+                mutableProcessState.addDeploymentKeyMapping(
+                    metadata.getTenantId(),
+                    metadata.getBpmnProcessId(),
+                    metadata.getKey(),
+                    deploymentKey);
+              } else {
                 mutableProcessState.setMissingDeploymentKey(
-                    metadata.getTenantId(), metadata.getKey(), deploymentKey));
+                    metadata.getTenantId(), metadata.getKey(), deploymentKey);
+              }
+            });
 
-    value.decisionsMetadata().stream()
-        .filter(not(DecisionRecord::isDuplicate))
+    value
+        .decisionsMetadata()
         .forEach(
-            metadata ->
+            metadata -> {
+              if (metadata.isDuplicate()) {
+                mutableDecisionState.addDeploymentKeyMapping(
+                    metadata.getTenantId(),
+                    metadata.getDecisionId(),
+                    metadata.getDecisionKey(),
+                    deploymentKey);
+              } else {
                 mutableDecisionState.setMissingDeploymentKey(
-                    metadata.getTenantId(), metadata.getDecisionKey(), deploymentKey));
+                    metadata.getTenantId(), metadata.getDecisionKey(), deploymentKey);
+              }
+            });
 
-    value.formMetadata().stream()
-        .filter(not(FormMetadataRecord::isDuplicate))
+    value
+        .formMetadata()
         .forEach(
-            metadata ->
+            metadata -> {
+              if (metadata.isDuplicate()) {
+                mutableFormState.addDeploymentKeyMapping(
+                    metadata.getTenantId(),
+                    metadata.getFormId(),
+                    metadata.getFormKey(),
+                    deploymentKey);
+              } else {
                 mutableFormState.setMissingDeploymentKey(
-                    metadata.getTenantId(), metadata.getFormKey(), deploymentKey));
+                    metadata.getTenantId(), metadata.getFormKey(), deploymentKey);
+              }
+            });
   }
 }
