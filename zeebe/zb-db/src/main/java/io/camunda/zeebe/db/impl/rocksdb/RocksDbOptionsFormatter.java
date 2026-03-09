@@ -7,6 +7,7 @@
  */
 package io.camunda.zeebe.db.impl.rocksdb;
 
+import java.util.Locale;
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.Platform;
 import jnr.ffi.Platform.OS;
@@ -53,7 +54,20 @@ final class RocksDbOptionsFormatter {
 
         if (bytesWritten >= 0) {
           // Convert the C string to Java String
-          return buffer.getString(0);
+          final var result = buffer.getString(0);
+
+          // Validate the result: JNR-FFI may not correctly pass double values to variadic
+          // functions on some architectures (e.g., Apple Silicon ARM64)
+          final var parsed = Double.parseDouble(result);
+          if (Math.abs(parsed - value) <= Math.ulp(value) * 1000
+              || Double.compare(parsed, value) == 0) {
+            return result;
+          }
+          LOG.warn(
+              "sprintf produced incorrect result for {}: '{}' (parsed as {}), falling back to String.format",
+              value,
+              result,
+              parsed);
         } else {
           LOG.warn(
               "sprintf failed to format double value: {}, falling back to String.format", value);
@@ -66,8 +80,8 @@ final class RocksDbOptionsFormatter {
       }
     }
 
-    // Fallback to regular Java String.format
-    return String.format("%,f", value);
+    // Fallback: use Locale.ROOT to ensure '.' as decimal separator regardless of system locale
+    return String.format(Locale.ROOT, "%f", value);
   }
 
   private static boolean ensureLibCIsAvailable() {
@@ -87,6 +101,7 @@ final class RocksDbOptionsFormatter {
     } catch (final Throwable e) {
       libCUnavailable = true;
       LOG.warn("Failed to load libc for sprintf formatting, will fall back to String.format", e);
+      return false;
     }
     return true;
   }

@@ -14,8 +14,10 @@ import io.camunda.zeebe.engine.EngineConfiguration;
 import io.camunda.zeebe.engine.Loggers;
 import io.camunda.zeebe.engine.processing.common.ExpressionProcessor;
 import io.camunda.zeebe.engine.processing.common.Failure;
+import io.camunda.zeebe.engine.processing.deployment.model.validation.BpmnDeploymentBindingValidator;
 import io.camunda.zeebe.engine.processing.streamprocessor.writers.StateWriter;
 import io.camunda.zeebe.engine.state.immutable.ProcessingState;
+import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.protocol.impl.record.value.deployment.DeploymentRecord;
 import io.camunda.zeebe.protocol.impl.record.value.deployment.DeploymentResource;
 import io.camunda.zeebe.protocol.record.RejectionType;
@@ -38,6 +40,7 @@ public final class DeploymentTransformer {
       new UnknownResourceTransformer();
 
   private final Map<String, DeploymentResourceTransformer> resourceTransformers;
+  private final BpmnResourceTransformer bpmnResourceTransformer;
 
   private final MessageDigest digestGenerator;
   // internal changes during processing
@@ -72,6 +75,7 @@ public final class DeploymentTransformer {
             expressionProcessor,
             featureFlags.enableStraightThroughProcessingLoopDetector(),
             config);
+    this.bpmnResourceTransformer = bpmnResourceTransformer;
     final var dmnResourceTransformer =
         new DmnResourceTransformer(
             keyGenerator, stateWriter, this::getChecksum, processingState.getDecisionState());
@@ -93,6 +97,7 @@ public final class DeploymentTransformer {
   }
 
   public Either<Failure, Void> transform(final DeploymentRecord deploymentEvent) {
+    bpmnResourceTransformer.clearParsedModels();
     final StringBuilder errors = new StringBuilder();
     boolean success = true;
 
@@ -107,6 +112,10 @@ public final class DeploymentTransformer {
     while (resourceIterator.hasNext()) {
       final DeploymentResource deploymentResource = resourceIterator.next();
       success &= transformResource(deploymentEvent, errors, deploymentResource);
+    }
+
+    if (success) {
+      success = validateDeploymentBindings(deploymentEvent, errors);
     }
 
     if (!success) {
@@ -161,6 +170,36 @@ public final class DeploymentTransformer {
         .map(Entry::getValue)
         .findFirst()
         .orElse(UNKNOWN_RESOURCE);
+  }
+
+  private boolean validateDeploymentBindings(
+      final DeploymentRecord deploymentEvent, final StringBuilder errors) {
+    final var bindingValidator = new BpmnDeploymentBindingValidator(deploymentEvent);
+    boolean valid = true;
+
+    for (final DeploymentResource resource : deploymentEvent.resources()) {
+      final String resourceName = resource.getResourceName();
+      if (!resourceName.endsWith(".bpmn") && !resourceName.endsWith(".xml")) {
+        continue;
+      }
+
+      final var model = bpmnResourceTransformer.getParsedModel(resourceName);
+
+      final var elementsWithDeploymentBinding = new BpmnElementsWithDeploymentBinding();
+      for (final Process process : model.getDefinitions().getChildElementsByType(Process.class)) {
+        if (process.isExecutable()) {
+          elementsWithDeploymentBinding.addFromProcess(process);
+        }
+      }
+
+      final String validationError = bindingValidator.validate(elementsWithDeploymentBinding);
+      if (validationError != null) {
+        errors.append("\n'").append(resourceName).append("':\n").append(validationError);
+        valid = false;
+      }
+    }
+
+    return valid;
   }
 
   private static final class UnknownResourceTransformer implements DeploymentResourceTransformer {

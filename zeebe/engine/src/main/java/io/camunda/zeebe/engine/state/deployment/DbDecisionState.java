@@ -95,6 +95,23 @@ public final class DbDecisionState implements MutableDecisionState {
 
   private final LoadingCache<TenantIdAndDrgKey, DeployedDrg> drgCache;
 
+  // CF83: [tenant id | decision id | deployment key] => decision key
+  private final DbLong dbDeploymentKey;
+  private final DbCompositeKey<DbString, DbLong> decisionIdAndDeploymentKey;
+  private final DbTenantAwareKey<DbCompositeKey<DbString, DbLong>>
+      tenantAwareDecisionIdAndDeploymentKey;
+  private final ColumnFamily<DbTenantAwareKey<DbCompositeKey<DbString, DbLong>>, DbLong>
+      decisionKeyByDecisionIdAndDeploymentKey;
+
+  // CF92: [tenant id | decision id | version tag] => decision key
+  private final DbString dbVersionTag;
+  private final DbCompositeKey<DbString, DbString> decisionIdAndVersionTag;
+  private final DbTenantAwareKey<DbCompositeKey<DbString, DbString>>
+      tenantAwareDecisionIdAndVersionTag;
+  private final ColumnFamily<DbTenantAwareKey<DbCompositeKey<DbString, DbString>>, DbLong>
+      decisionKeyByDecisionIdAndVersionTag;
+  private final DbLong dbDecisionKeyResult;
+
   public DbDecisionState(
       final ZeebeDb<ZbColumnFamilies> zeebeDb,
       final TransactionContext transactionContext,
@@ -190,6 +207,31 @@ public final class DbDecisionState implements MutableDecisionState {
                         tenantIdAndDrgKey.drgKey, tenantIdAndDrgKey.tenantId);
                   }
                 });
+
+    // CF83
+    dbDeploymentKey = new DbLong();
+    decisionIdAndDeploymentKey = new DbCompositeKey<>(dbDecisionId, dbDeploymentKey);
+    tenantAwareDecisionIdAndDeploymentKey =
+        new DbTenantAwareKey<>(tenantIdKey, decisionIdAndDeploymentKey, PlacementType.PREFIX);
+    dbDecisionKeyResult = new DbLong();
+    decisionKeyByDecisionIdAndDeploymentKey =
+        zeebeDb.createColumnFamily(
+            ZbColumnFamilies.DMN_DECISION_KEY_BY_DECISION_ID_AND_DEPLOYMENT_KEY,
+            transactionContext,
+            tenantAwareDecisionIdAndDeploymentKey,
+            dbDecisionKeyResult);
+
+    // CF92
+    dbVersionTag = new DbString();
+    decisionIdAndVersionTag = new DbCompositeKey<>(dbDecisionId, dbVersionTag);
+    tenantAwareDecisionIdAndVersionTag =
+        new DbTenantAwareKey<>(tenantIdKey, decisionIdAndVersionTag, PlacementType.PREFIX);
+    decisionKeyByDecisionIdAndVersionTag =
+        zeebeDb.createColumnFamily(
+            ZbColumnFamilies.DMN_DECISION_KEY_BY_DECISION_ID_AND_VERSION_TAG,
+            transactionContext,
+            tenantAwareDecisionIdAndVersionTag,
+            dbDecisionKeyResult);
   }
 
   @Override
@@ -211,6 +253,39 @@ public final class DbDecisionState implements MutableDecisionState {
     tenantIdKey.wrapString(tenantId);
     return Optional.ofNullable(decisionsByKey.get(tenantAwareDecisionKey))
         .map(PersistedDecision::copy);
+  }
+
+  @Override
+  public Optional<PersistedDecision> findDecisionByIdAndDeploymentKey(
+      final String tenantId, final DirectBuffer decisionId, final long deploymentKey) {
+    tenantIdKey.wrapString(tenantId);
+    dbDecisionId.wrapBuffer(decisionId);
+    dbDeploymentKey.wrapLong(deploymentKey);
+
+    final var storedKey =
+        decisionKeyByDecisionIdAndDeploymentKey.get(tenantAwareDecisionIdAndDeploymentKey);
+    if (storedKey == null) {
+      return Optional.empty();
+    }
+    return findDecisionByTenantAndKey(tenantId, storedKey.getValue());
+  }
+
+  @Override
+  public Optional<PersistedDecision> findDecisionByIdAndVersionTag(
+      final String tenantId, final DirectBuffer decisionId, final String versionTag) {
+    if (versionTag == null || versionTag.isEmpty()) {
+      return Optional.empty();
+    }
+    tenantIdKey.wrapString(tenantId);
+    dbDecisionId.wrapBuffer(decisionId);
+    dbVersionTag.wrapString(versionTag);
+
+    final var storedKey =
+        decisionKeyByDecisionIdAndVersionTag.get(tenantAwareDecisionIdAndVersionTag);
+    if (storedKey == null) {
+      return Optional.empty();
+    }
+    return findDecisionByTenantAndKey(tenantId, storedKey.getValue());
   }
 
   @Override
@@ -248,6 +323,28 @@ public final class DbDecisionState implements MutableDecisionState {
         }));
 
     return decisions;
+  }
+
+  @Override
+  public void forEachDecisionRequirements(
+      final DecisionRequirementsIdentifier previousDecisionRequirements,
+      final PersistedDecisionRequirementsVisitor visitor) {
+    if (previousDecisionRequirements != null) {
+      tenantIdKey.wrapString(previousDecisionRequirements.tenantId());
+      dbDecisionRequirementsKey.wrapLong(previousDecisionRequirements.decisionRequirementsKey());
+      final boolean[] skippedFirst = {false};
+      decisionRequirementsByKey.whileTrue(
+          tenantAwareDecisionRequirementsKey,
+          (key, drg) -> {
+            if (!skippedFirst[0]) {
+              skippedFirst[0] = true;
+              return true;
+            }
+            return visitor.visit(drg);
+          });
+    } else {
+      decisionRequirementsByKey.whileTrue((key, drg) -> visitor.visit(drg));
+    }
   }
 
   @Override
@@ -342,6 +439,64 @@ public final class DbDecisionState implements MutableDecisionState {
   }
 
   @Override
+  public void storeDecisionKeyByDecisionIdAndDeploymentKey(final DecisionRecord record) {
+    tenantIdKey.wrapString(record.getTenantId());
+    dbDecisionId.wrapString(record.getDecisionId());
+    dbDeploymentKey.wrapLong(record.getDeploymentKey());
+    dbDecisionKeyResult.wrapLong(record.getDecisionKey());
+    decisionKeyByDecisionIdAndDeploymentKey.upsert(
+        tenantAwareDecisionIdAndDeploymentKey, dbDecisionKeyResult);
+  }
+
+  @Override
+  public void storeDecisionKeyByDecisionIdAndVersionTag(final DecisionRecord record) {
+    final var versionTag = record.getVersionTag();
+    if (versionTag == null || versionTag.isEmpty()) {
+      return;
+    }
+    tenantIdKey.wrapString(record.getTenantId());
+    dbDecisionId.wrapString(record.getDecisionId());
+    dbVersionTag.wrapString(versionTag);
+    dbDecisionKeyResult.wrapLong(record.getDecisionKey());
+    decisionKeyByDecisionIdAndVersionTag.upsert(
+        tenantAwareDecisionIdAndVersionTag, dbDecisionKeyResult);
+  }
+
+  @Override
+  public void setMissingDeploymentKey(
+      final String tenantId, final long decisionKey, final long deploymentKey) {
+    tenantIdKey.wrapString(tenantId);
+    dbDecisionKey.wrapLong(decisionKey);
+    final var decision = decisionsByKey.get(tenantAwareDecisionKey);
+    if (decision == null) {
+      return;
+    }
+    decision.setDeploymentKey(deploymentKey);
+    decisionsByKey.update(tenantAwareDecisionKey, decision);
+
+    // Store the deployment key lookup in CF83
+    dbDecisionId.wrapBuffer(decision.getDecisionId());
+    dbDeploymentKey.wrapLong(deploymentKey);
+    dbDecisionKeyResult.wrapLong(decisionKey);
+    decisionKeyByDecisionIdAndDeploymentKey.upsert(
+        tenantAwareDecisionIdAndDeploymentKey, dbDecisionKeyResult);
+  }
+
+  @Override
+  public void addDeploymentKeyMapping(
+      final String tenantId,
+      final String decisionId,
+      final long decisionKey,
+      final long deploymentKey) {
+    tenantIdKey.wrapString(tenantId);
+    dbDecisionId.wrapString(decisionId);
+    dbDeploymentKey.wrapLong(deploymentKey);
+    dbDecisionKeyResult.wrapLong(decisionKey);
+    decisionKeyByDecisionIdAndDeploymentKey.upsert(
+        tenantAwareDecisionIdAndDeploymentKey, dbDecisionKeyResult);
+  }
+
+  @Override
   public void storeDecisionRecord(final DecisionRecord record) {
     tenantIdKey.wrapString(record.getTenantId());
     dbDecisionKey.wrapLong(record.getDecisionKey());
@@ -409,6 +564,18 @@ public final class DbDecisionState implements MutableDecisionState {
     decisionKeyByDecisionRequirementsKey.deleteExisting(dbDecisionRequirementsKeyAndDecisionKey);
     decisionsByKey.deleteExisting(tenantAwareDecisionKey);
     decisionKeyByDecisionIdAndVersion.deleteExisting(tenantAwareDecisionIdAndVersion);
+
+    // Delete from CF83 if deploymentKey is set
+    if (record.getDeploymentKey() >= 0) {
+      dbDeploymentKey.wrapLong(record.getDeploymentKey());
+      decisionKeyByDecisionIdAndDeploymentKey.deleteIfExists(tenantAwareDecisionIdAndDeploymentKey);
+    }
+
+    // Delete from CF92 if versionTag is set
+    if (record.getVersionTag() != null && !record.getVersionTag().isEmpty()) {
+      dbVersionTag.wrapString(record.getVersionTag());
+      decisionKeyByDecisionIdAndVersionTag.deleteIfExists(tenantAwareDecisionIdAndVersionTag);
+    }
   }
 
   @Override

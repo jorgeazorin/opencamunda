@@ -50,6 +50,7 @@ public class ProcessTest extends BpmnModelElementInstanceTest {
     return Arrays.asList(
         new AttributeAssumption("processType", false, false, ProcessType.None),
         new AttributeAssumption("isClosed", false, false, false),
-        new AttributeAssumption("isExecutable"));
+        new AttributeAssumption("isExecutable"),
+        new AttributeAssumption("http://camunda.org/schema/zeebe/1.0", "versionTag"));
   }
 }

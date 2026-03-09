@@ -35,4 +35,18 @@ public interface MutableProcessState extends ProcessState {
    * @param processRecord the record of the process that is deleted
    */
   void deleteProcess(final ProcessRecord processRecord);
+
+  void storeProcessDefinitionKeyByProcessIdAndDeploymentKey(ProcessRecord processRecord);
+
+  void storeProcessDefinitionKeyByProcessIdAndVersionTag(ProcessRecord processRecord);
+
+  void setMissingDeploymentKey(String tenantId, long processDefinitionKey, long deploymentKey);
+
+  /**
+   * Adds a deployment-key lookup entry (CF82) mapping (processId, deploymentKey) →
+   * processDefinitionKey without modifying the stored process record. Used for duplicate processes
+   * that are part of a new deployment.
+   */
+  void addDeploymentKeyMapping(
+      String tenantId, String processId, long processDefinitionKey, long deploymentKey);
 }

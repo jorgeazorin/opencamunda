@@ -25,4 +25,9 @@ public interface ParsedDecision {
    * @return the id of the decision
    */
   String getId();
+
+  /**
+   * @return the version tag of the decision, or {@code null} if not set
+   */
+  String getVersionTag();
 }

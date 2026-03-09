@@ -86,6 +86,8 @@ public final class BpmnBehaviorsImpl implements BpmnBehaviors {
         new EventTriggerBehavior(
             processingState.getKeyGenerator(), catchEventBehavior, writers, processingState);
 
+    stateBehavior = new BpmnStateBehavior(processingState, variableBehavior);
+
     bpmnDecisionBehavior =
         new BpmnDecisionBehavior(
             decisionBehavior,
@@ -93,9 +95,8 @@ public final class BpmnBehaviorsImpl implements BpmnBehaviors {
             eventTriggerBehavior,
             writers.state(),
             processingState.getKeyGenerator(),
-            expressionBehavior);
-
-    stateBehavior = new BpmnStateBehavior(processingState, variableBehavior);
+            expressionBehavior,
+            stateBehavior);
 
     stateTransitionGuard = new ProcessInstanceStateTransitionGuard(stateBehavior);
 

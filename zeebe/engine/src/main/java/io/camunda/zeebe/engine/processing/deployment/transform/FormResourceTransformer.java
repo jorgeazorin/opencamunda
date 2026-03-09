@@ -55,24 +55,23 @@ public final class FormResourceTransformer implements DeploymentResourceTransfor
 
     return parseFormId(resource)
         .flatMap(
-            formId ->
-                checkForDuplicateFormId(formId, resource, deployment)
+            pojo ->
+                checkForDuplicateFormId(pojo.getId(), resource, deployment)
                     .map(
                         noDuplicates -> {
                           final FormMetadataRecord formRecord = deployment.formMetadata().add();
                           appendMetadataToFormRecord(
-                              formRecord, formId, resource, deployment.getTenantId());
-                          writeFormRecord(formRecord, resource);
+                              formRecord, pojo.getId(), resource, deployment.getTenantId());
+                          writeFormRecord(formRecord, resource, pojo.getVersionTag());
 
                           return null;
                         }));
   }
 
-  private Either<Failure, String> parseFormId(final DeploymentResource resource) {
+  private Either<Failure, FormIdPOJO> parseFormId(final DeploymentResource resource) {
     try {
-      final String formId = JSON_MAPPER.readValue(resource.getResource(), FormIdPOJO.class).getId();
-
-      return validateFormId(formId);
+      final FormIdPOJO pojo = JSON_MAPPER.readValue(resource.getResource(), FormIdPOJO.class);
+      return validateFormId(pojo);
     } catch (final JsonProcessingException e) {
       final var failureMessage =
           String.format(
@@ -140,16 +139,20 @@ public final class FormResourceTransformer implements DeploymentResourceTransfor
   }
 
   private void writeFormRecord(
-      final FormMetadataRecord formRecord, final DeploymentResource resource) {
+      final FormMetadataRecord formRecord,
+      final DeploymentResource resource,
+      final String versionTag) {
     if (!formRecord.isDuplicate()) {
-      stateWriter.appendFollowUpEvent(
-          formRecord.getFormKey(),
-          FormIntent.CREATED,
-          new FormRecord().wrap(formRecord, resource.getResource()));
+      final var formRecordValue = new FormRecord().wrap(formRecord, resource.getResource());
+      if (versionTag != null && !versionTag.isBlank()) {
+        formRecordValue.setVersionTag(versionTag);
+      }
+      stateWriter.appendFollowUpEvent(formRecord.getFormKey(), FormIntent.CREATED, formRecordValue);
     }
   }
 
-  private Either<Failure, String> validateFormId(final String formId) {
+  private Either<Failure, FormIdPOJO> validateFormId(final FormIdPOJO pojo) {
+    final String formId = pojo.getId();
     if (formId == null) {
       return Either.left(new Failure("Expected the form id to be present, but none given"));
     }
@@ -157,12 +160,13 @@ public final class FormResourceTransformer implements DeploymentResourceTransfor
       return Either.left(new Failure("Expected the form id to be filled, but it is blank"));
     }
 
-    return Either.right(formId);
+    return Either.right(pojo);
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   private static class FormIdPOJO {
     private String id;
+    private String versionTag;
 
     public FormIdPOJO() {}
 
@@ -172,6 +176,14 @@ public final class FormResourceTransformer implements DeploymentResourceTransfor
 
     public void setId(final String id) {
       this.id = id;
+    }
+
+    public String getVersionTag() {
+      return versionTag;
+    }
+
+    public void setVersionTag(final String versionTag) {
+      this.versionTag = versionTag;
     }
   }
 }

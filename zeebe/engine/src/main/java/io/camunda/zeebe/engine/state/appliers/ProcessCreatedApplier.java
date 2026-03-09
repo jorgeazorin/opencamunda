@@ -24,5 +24,6 @@ public class ProcessCreatedApplier implements TypedEventApplier<ProcessIntent, P
   @Override
   public void applyState(final long processDefinitionKey, final ProcessRecord value) {
     processState.putProcess(processDefinitionKey, value);
+    processState.storeProcessDefinitionKeyByProcessIdAndVersionTag(value);
   }
 }

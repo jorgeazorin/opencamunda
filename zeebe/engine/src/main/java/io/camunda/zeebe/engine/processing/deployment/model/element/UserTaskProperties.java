@@ -8,6 +8,7 @@
 package io.camunda.zeebe.engine.processing.deployment.model.element;
 
 import io.camunda.zeebe.el.Expression;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeBindingType;
 import java.util.Map;
 
 /** The properties of a user task element. */
@@ -20,6 +21,8 @@ public class UserTaskProperties {
   private Expression externalFormReference;
   private Expression followUpDate;
   private Expression formId;
+  private ZeebeBindingType formBindingType = ZeebeBindingType.latest;
+  private String formVersionTag;
   private Map<String, String> taskHeaders = Map.of();
 
   public Expression getAssignee() {
@@ -78,6 +81,22 @@ public class UserTaskProperties {
     this.formId = formId;
   }
 
+  public ZeebeBindingType getFormBindingType() {
+    return formBindingType;
+  }
+
+  public void setFormBindingType(final ZeebeBindingType formBindingType) {
+    this.formBindingType = formBindingType;
+  }
+
+  public String getFormVersionTag() {
+    return formVersionTag;
+  }
+
+  public void setFormVersionTag(final String formVersionTag) {
+    this.formVersionTag = formVersionTag;
+  }
+
   public Map<String, String> getTaskHeaders() {
     return taskHeaders;
   }
@@ -94,6 +113,8 @@ public class UserTaskProperties {
     setExternalFormReference(userTaskProperties.getExternalFormReference());
     setFollowUpDate(userTaskProperties.getFollowUpDate());
     setFormId(userTaskProperties.getFormId());
+    setFormBindingType(userTaskProperties.getFormBindingType());
+    setFormVersionTag(userTaskProperties.getFormVersionTag());
     setTaskHeaders(userTaskProperties.getTaskHeaders());
   }
 }

@@ -18,6 +18,7 @@ import io.camunda.zeebe.engine.processing.deployment.model.transformation.ModelE
 import io.camunda.zeebe.engine.processing.deployment.model.transformation.TransformContext;
 import io.camunda.zeebe.model.bpmn.instance.UserTask;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeAssignmentDefinition;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeBindingType;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeFormDefinition;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeHeader;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeTaskHeaders;
@@ -216,8 +217,18 @@ public final class UserTaskTransformer implements ModelElementTransformer<UserTa
     final ZeebeFormDefinition formDefinition =
         element.getSingleExtensionElement(ZeebeFormDefinition.class);
 
-    if (formDefinition != null && formDefinition.getFormId() != null) {
-      userTaskProperties.setFormId(expressionLanguage.parseExpression(formDefinition.getFormId()));
+    if (formDefinition != null) {
+      if (formDefinition.getFormId() != null) {
+        userTaskProperties.setFormId(
+            expressionLanguage.parseExpression(formDefinition.getFormId()));
+      }
+
+      final var bindingType = formDefinition.getBindingType();
+      userTaskProperties.setFormBindingType(
+          bindingType != null ? bindingType : ZeebeBindingType.latest);
+
+      final var versionTag = formDefinition.getVersionTag();
+      userTaskProperties.setFormVersionTag(versionTag);
     }
   }
 

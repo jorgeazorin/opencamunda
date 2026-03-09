@@ -12,7 +12,10 @@ import io.camunda.zeebe.dmn.ParsedDecisionRequirementsGraph;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.camunda.bpm.model.dmn.DmnModelInstance;
+import org.camunda.bpm.model.dmn.instance.Decision;
 import org.camunda.bpm.model.dmn.instance.Definitions;
 import org.camunda.dmn.parser.ParsedDmn;
 
@@ -86,11 +89,26 @@ public final class ParsedDmnScalaDrg implements ParsedDecisionRequirementsGraph 
   private static List<ParsedDecision> getParsedDecisions(final ParsedDmn parsedDmn) {
     final var decisions = new ArrayList<ParsedDecision>();
 
+    // Build a map from decision ID to versionTag from the DMN XML model
+    final DmnModelInstance modelInstance = parsedDmn.model();
+    final Map<String, String> versionTagById =
+        modelInstance.getModelElementsByType(Decision.class).stream()
+            .collect(
+                Collectors.toMap(
+                    Decision::getId,
+                    d -> d.getVersionTag() != null ? d.getVersionTag() : "",
+                    (a, b) -> a));
+
     parsedDmn
         .decisions()
         .foreach(
             decision -> {
-              final var parsedDecision = new ParsedDmnScalaDecision(decision.id(), decision.name());
+              final String versionTag = versionTagById.getOrDefault(decision.id(), null);
+              final var parsedDecision =
+                  new ParsedDmnScalaDecision(
+                      decision.id(),
+                      decision.name(),
+                      versionTag != null && !versionTag.isEmpty() ? versionTag : null);
               return decisions.add(parsedDecision);
             });
 

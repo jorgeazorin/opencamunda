@@ -21,6 +21,8 @@ class DmnParsingTest {
   private static final String INVALID_DECISION_TABLE =
       "/decision-table-with-invalid-expression.dmn";
   private static final String VALID_DRG = "/drg-force-user.dmn";
+  private static final String DECISION_TABLE_WITH_VERSION_TAG =
+      "/decision-table-with-version-tag.dmn";
 
   private final DecisionEngine decisionEngine = DecisionEngineFactory.createDecisionEngine();
 
@@ -115,5 +117,24 @@ class DmnParsingTest {
     assertThat(parsedDrg.getName()).isNull();
     assertThat(parsedDrg.getNamespace()).isNull();
     assertThat(parsedDrg.getDecisions()).isEmpty();
+  }
+
+  @Test
+  void shouldParseDecisionWithVersionTag() {
+    // given
+    final var inputStream = getClass().getResourceAsStream(DECISION_TABLE_WITH_VERSION_TAG);
+
+    // when
+    final var parsedDrg = decisionEngine.parse(inputStream);
+
+    // then
+    assertThat(parsedDrg.isValid())
+        .describedAs("Expect that the DMN with versionTag is parsed successfully")
+        .isTrue();
+
+    assertThat(parsedDrg.getDecisions())
+        .hasSize(1)
+        .extracting(ParsedDecision::getId, ParsedDecision::getName, ParsedDecision::getVersionTag)
+        .contains(tuple("jedi_or_sith", "Jedi or Sith", "v1.0"));
   }
 }

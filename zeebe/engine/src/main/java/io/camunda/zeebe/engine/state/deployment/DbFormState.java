@@ -7,6 +7,8 @@
  */
 package io.camunda.zeebe.engine.state.deployment;
 
+import static io.camunda.zeebe.util.buffer.BufferUtil.bufferAsString;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.camunda.zeebe.db.ColumnFamily;
@@ -41,6 +43,22 @@ public class DbFormState implements MutableFormState {
       formByIdAndVersionColumnFamily;
   private final Cache<TenantIdAndFormId, PersistedForm> formsByTenantIdAndIdCache;
 
+  // CF84: [tenant id | form id | deployment key] => form key
+  private final DbLong dbDeploymentKey;
+  private final DbCompositeKey<DbString, DbLong> formIdAndDeploymentKey;
+  private final DbTenantAwareKey<DbCompositeKey<DbString, DbLong>>
+      tenantAwareFormIdAndDeploymentKey;
+  private final DbLong dbFormKeyResult;
+  private final ColumnFamily<DbTenantAwareKey<DbCompositeKey<DbString, DbLong>>, DbLong>
+      formKeyByFormIdAndDeploymentKey;
+
+  // CF93: [tenant id | form id | version tag] => form key
+  private final DbString dbVersionTag;
+  private final DbCompositeKey<DbString, DbString> formIdAndVersionTag;
+  private final DbTenantAwareKey<DbCompositeKey<DbString, DbString>> tenantAwareFormIdAndVersionTag;
+  private final ColumnFamily<DbTenantAwareKey<DbCompositeKey<DbString, DbString>>, DbLong>
+      formKeyByFormIdAndVersionTag;
+
   public DbFormState(
       final ZeebeDb<ZbColumnFamilies> zeebeDb,
       final TransactionContext transactionContext,
@@ -71,6 +89,31 @@ public class DbFormState implements MutableFormState {
 
     formsByTenantIdAndIdCache =
         CacheBuilder.newBuilder().maximumSize(config.getFormCacheCapacity()).build();
+
+    // CF84
+    dbDeploymentKey = new DbLong();
+    formIdAndDeploymentKey = new DbCompositeKey<>(dbFormId, dbDeploymentKey);
+    tenantAwareFormIdAndDeploymentKey =
+        new DbTenantAwareKey<>(tenantIdKey, formIdAndDeploymentKey, PlacementType.PREFIX);
+    dbFormKeyResult = new DbLong();
+    formKeyByFormIdAndDeploymentKey =
+        zeebeDb.createColumnFamily(
+            ZbColumnFamilies.FORM_KEY_BY_FORM_ID_AND_DEPLOYMENT_KEY,
+            transactionContext,
+            tenantAwareFormIdAndDeploymentKey,
+            dbFormKeyResult);
+
+    // CF93
+    dbVersionTag = new DbString();
+    formIdAndVersionTag = new DbCompositeKey<>(dbFormId, dbVersionTag);
+    tenantAwareFormIdAndVersionTag =
+        new DbTenantAwareKey<>(tenantIdKey, formIdAndVersionTag, PlacementType.PREFIX);
+    formKeyByFormIdAndVersionTag =
+        zeebeDb.createColumnFamily(
+            ZbColumnFamilies.FORM_KEY_BY_FORM_ID_AND_VERSION_TAG,
+            transactionContext,
+            tenantAwareFormIdAndVersionTag,
+            dbFormKeyResult);
   }
 
   @Override
@@ -105,6 +148,19 @@ public class DbFormState implements MutableFormState {
     formsByKey.deleteExisting(tenantAwareFormKey);
     formsByTenantIdAndIdCache.invalidate(
         new TenantIdAndFormId(record.getTenantId(), record.getFormId()));
+
+    // Delete from CF84 if deploymentKey is set
+    dbFormId.wrapString(record.getFormId());
+    if (record.getDeploymentKey() >= 0) {
+      dbDeploymentKey.wrapLong(record.getDeploymentKey());
+      formKeyByFormIdAndDeploymentKey.deleteIfExists(tenantAwareFormIdAndDeploymentKey);
+    }
+
+    // Delete from CF93 if versionTag is set
+    if (record.getVersionTag() != null && !record.getVersionTag().isEmpty()) {
+      dbVersionTag.wrapString(record.getVersionTag());
+      formKeyByFormIdAndVersionTag.deleteIfExists(tenantAwareFormIdAndVersionTag);
+    }
   }
 
   @Override
@@ -142,6 +198,112 @@ public class DbFormState implements MutableFormState {
     tenantIdKey.wrapString(tenantId);
     dbFormKey.wrapLong(formKey);
     return Optional.ofNullable(formsByKey.get(tenantAwareFormKey)).map(PersistedForm::copy);
+  }
+
+  @Override
+  public Optional<PersistedForm> findFormByIdAndDeploymentKey(
+      final String formId, final long deploymentKey, final String tenantId) {
+    tenantIdKey.wrapString(tenantId);
+    dbFormId.wrapString(formId);
+    dbDeploymentKey.wrapLong(deploymentKey);
+
+    final var storedKey = formKeyByFormIdAndDeploymentKey.get(tenantAwareFormIdAndDeploymentKey);
+    if (storedKey == null) {
+      return Optional.empty();
+    }
+    return findFormByKey(storedKey.getValue(), tenantId);
+  }
+
+  @Override
+  public Optional<PersistedForm> findFormByIdAndVersionTag(
+      final String formId, final String versionTag, final String tenantId) {
+    if (versionTag == null || versionTag.isEmpty()) {
+      return Optional.empty();
+    }
+    tenantIdKey.wrapString(tenantId);
+    dbFormId.wrapString(formId);
+    dbVersionTag.wrapString(versionTag);
+
+    final var storedKey = formKeyByFormIdAndVersionTag.get(tenantAwareFormIdAndVersionTag);
+    if (storedKey == null) {
+      return Optional.empty();
+    }
+    return findFormByKey(storedKey.getValue(), tenantId);
+  }
+
+  @Override
+  public void forEachForm(final FormIdentifier previousForm, final PersistedFormVisitor visitor) {
+    if (previousForm != null) {
+      tenantIdKey.wrapString(previousForm.tenantId());
+      dbFormKey.wrapLong(previousForm.key());
+      final boolean[] skippedFirst = {false};
+      formsByKey.whileTrue(
+          tenantAwareFormKey,
+          (key, form) -> {
+            if (!skippedFirst[0]) {
+              skippedFirst[0] = true;
+              return true;
+            }
+            return visitor.visit(form);
+          });
+    } else {
+      formsByKey.whileTrue((key, form) -> visitor.visit(form));
+    }
+  }
+
+  @Override
+  public void setMissingDeploymentKey(
+      final String tenantId, final long formKey, final long deploymentKey) {
+    tenantIdKey.wrapString(tenantId);
+    dbFormKey.wrapLong(formKey);
+    final var form = formsByKey.get(tenantAwareFormKey);
+    if (form == null) {
+      return;
+    }
+    final var formId = bufferAsString(form.getFormId());
+    final var formVersionValue = form.getVersion();
+    form.setDeploymentKey(deploymentKey);
+    formsByKey.update(tenantAwareFormKey, form);
+
+    // also update in formByIdAndVersionColumnFamily
+    dbFormId.wrapString(formId);
+    formVersion.wrapLong(formVersionValue);
+    final var formByVersion = formByIdAndVersionColumnFamily.get(tenantAwareIdAndVersionKey);
+    if (formByVersion != null) {
+      formByVersion.setDeploymentKey(deploymentKey);
+      formByIdAndVersionColumnFamily.update(tenantAwareIdAndVersionKey, formByVersion);
+    }
+
+    // Store the deployment key lookup in CF84
+    dbDeploymentKey.wrapLong(deploymentKey);
+    dbFormKeyResult.wrapLong(formKey);
+    formKeyByFormIdAndDeploymentKey.upsert(tenantAwareFormIdAndDeploymentKey, dbFormKeyResult);
+
+    // Invalidate cache
+    formsByTenantIdAndIdCache.invalidate(new TenantIdAndFormId(tenantId, formId));
+  }
+
+  @Override
+  public void addDeploymentKeyMapping(
+      final String tenantId, final String formId, final long formKey, final long deploymentKey) {
+    tenantIdKey.wrapString(tenantId);
+    dbFormId.wrapString(formId);
+    dbDeploymentKey.wrapLong(deploymentKey);
+    dbFormKeyResult.wrapLong(formKey);
+    formKeyByFormIdAndDeploymentKey.upsert(tenantAwareFormIdAndDeploymentKey, dbFormKeyResult);
+  }
+
+  @Override
+  public void storeFormKeyByFormIdAndVersionTag(final FormRecord record) {
+    final var versionTag = record.getVersionTag();
+    if (versionTag == null || versionTag.isEmpty()) {
+      return;
+    }
+    tenantIdKey.wrapString(record.getTenantId());
+    dbFormId.wrapString(record.getFormId());
+    dbVersionTag.wrapString(versionTag);
+    dbFormKeyResult.wrapLong(record.getFormKey());
+    formKeyByFormIdAndVersionTag.upsert(tenantAwareFormIdAndVersionTag, dbFormKeyResult);
   }
 
   @Override

@@ -19,6 +19,7 @@ import io.camunda.zeebe.engine.state.immutable.FormState;
 import io.camunda.zeebe.engine.state.immutable.UserTaskState.LifecycleState;
 import io.camunda.zeebe.engine.state.instance.ElementInstance;
 import io.camunda.zeebe.engine.state.mutable.MutableUserTaskState;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeBindingType;
 import io.camunda.zeebe.msgpack.value.DocumentValue;
 import io.camunda.zeebe.protocol.impl.record.value.usertask.UserTaskRecord;
 import io.camunda.zeebe.protocol.record.intent.UserTaskIntent;
@@ -30,7 +31,6 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +90,13 @@ public final class BpmnUserTaskBehavior {
                     .map(p::followUpDate))
         .flatMap(
             p ->
-                evaluateFormIdExpressionToFormKey(userTaskProps.getFormId(), scopeKey, tenantId)
+                evaluateFormIdExpressionToFormKey(
+                        userTaskProps.getFormId(),
+                        userTaskProps.getFormBindingType(),
+                        userTaskProps.getFormVersionTag(),
+                        context,
+                        scopeKey,
+                        tenantId)
                     .map(p::formKey))
         .flatMap(
             p ->
@@ -166,7 +172,12 @@ public final class BpmnUserTaskBehavior {
   }
 
   public Either<Failure, Long> evaluateFormIdExpressionToFormKey(
-      final Expression formIdExpression, final long scopeKey, final String tenantId) {
+      final Expression formIdExpression,
+      final ZeebeBindingType bindingType,
+      final String versionTag,
+      final BpmnElementContext context,
+      final long scopeKey,
+      final String tenantId) {
     if (formIdExpression == null) {
       return Either.right(null);
     }
@@ -174,24 +185,86 @@ public final class BpmnUserTaskBehavior {
         .evaluateStringExpression(formIdExpression, scopeKey)
         .flatMap(
             formId -> {
-              final Optional<PersistedForm> latestFormById =
-                  formState.findLatestFormById(formId, tenantId);
-              return latestFormById
-                  .<Either<Failure, Long>>map(
-                      persistedForm -> Either.right(persistedForm.getFormKey()))
-                  .orElseGet(
-                      () ->
-                          Either.left(
-                              new Failure(
-                                  String.format(
-                                      "Expected to find a form with id '%s',"
-                                          + " but no form with this id is found,"
-                                          + " at least a form with this id should be available."
-                                          + " To resolve the Incident please deploy a form with the same id",
-                                      formId),
-                                  ErrorType.FORM_NOT_FOUND,
-                                  scopeKey)));
+              final var form = findLinkedForm(formId, bindingType, versionTag, context, scopeKey);
+              return form.map(PersistedForm::getFormKey);
             });
+  }
+
+  private Either<Failure, PersistedForm> findLinkedForm(
+      final String formId,
+      final ZeebeBindingType bindingType,
+      final String versionTag,
+      final BpmnElementContext context,
+      final long scopeKey) {
+    return switch (bindingType) {
+      case deployment -> findFormByIdInSameDeployment(formId, context, scopeKey);
+      case latest -> findLatestFormById(formId, context.getTenantId(), scopeKey);
+      case versionTag ->
+          findFormByIdAndVersionTag(formId, versionTag, context.getTenantId(), scopeKey);
+    };
+  }
+
+  private Either<Failure, PersistedForm> findFormByIdInSameDeployment(
+      final String formId, final BpmnElementContext context, final long scopeKey) {
+    return stateBehavior
+        .getDeploymentKey(context.getProcessDefinitionKey(), context.getTenantId())
+        .flatMap(
+            deploymentKey ->
+                formState
+                    .findFormByIdAndDeploymentKey(formId, deploymentKey, context.getTenantId())
+                    .<Either<Failure, PersistedForm>>map(Either::right)
+                    .orElseGet(
+                        () ->
+                            Either.left(
+                                new Failure(
+                                    String.format(
+                                        """
+                                        Expected to use a form with id '%s' with binding type 'deployment', \
+                                        but no such form found in the deployment with key %s which contained the current process. \
+                                        To resolve this incident, migrate the process instance to a process definition \
+                                        that is deployed together with the intended form to use.\
+                                        """,
+                                        formId, deploymentKey),
+                                    ErrorType.FORM_NOT_FOUND,
+                                    scopeKey))));
+  }
+
+  private Either<Failure, PersistedForm> findLatestFormById(
+      final String formId, final String tenantId, final long scopeKey) {
+    return formState
+        .findLatestFormById(formId, tenantId)
+        .<Either<Failure, PersistedForm>>map(Either::right)
+        .orElseGet(
+            () ->
+                Either.left(
+                    new Failure(
+                        String.format(
+                            "Expected to find a form with id '%s',"
+                                + " but no form with this id is found,"
+                                + " at least a form with this id should be available."
+                                + " To resolve the Incident please deploy a form with the same id",
+                            formId),
+                        ErrorType.FORM_NOT_FOUND,
+                        scopeKey)));
+  }
+
+  private Either<Failure, PersistedForm> findFormByIdAndVersionTag(
+      final String formId, final String versionTag, final String tenantId, final long scopeKey) {
+    return formState
+        .findFormByIdAndVersionTag(formId, versionTag, tenantId)
+        .<Either<Failure, PersistedForm>>map(Either::right)
+        .orElseGet(
+            () ->
+                Either.left(
+                    new Failure(
+                        String.format(
+                            """
+                            Expected to use a form with id '%s' and version tag '%s', but no such form found. \
+                            To resolve the incident, deploy a form with the given id and version tag.
+                            """,
+                            formId, versionTag),
+                        ErrorType.FORM_NOT_FOUND,
+                        scopeKey)));
   }
 
   public Either<Failure, String> evaluateExternalFormReferenceExpression(

@@ -43,4 +43,12 @@ public interface ZeebeCalledDecision extends BpmnModelElementInstance {
    * @param resultVariable the name of the result variable
    */
   void setResultVariable(String resultVariable);
+
+  ZeebeBindingType getBindingType();
+
+  void setBindingType(ZeebeBindingType bindingType);
+
+  String getVersionTag();
+
+  void setVersionTag(String versionTag);
 }

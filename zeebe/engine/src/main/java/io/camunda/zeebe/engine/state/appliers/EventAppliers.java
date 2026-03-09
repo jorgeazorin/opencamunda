@@ -138,6 +138,14 @@ public final class EventAppliers implements EventApplier {
     register(DeploymentIntent.CREATED, 1, new DeploymentCreatedApplier(state.getDeploymentState()));
     register(DeploymentIntent.CREATED, 2, NOOP_EVENT_APPLIER);
     register(
+        DeploymentIntent.CREATED,
+        3,
+        new DeploymentCreatedV3Applier(
+            state.getDeploymentState(),
+            state.getProcessState(),
+            state.getDecisionState(),
+            state.getFormState()));
+    register(
         DeploymentIntent.DISTRIBUTED,
         new DeploymentDistributedApplier(state.getProcessState(), state.getDecisionState()));
     register(

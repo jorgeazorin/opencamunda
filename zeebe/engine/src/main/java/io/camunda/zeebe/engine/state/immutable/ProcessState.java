@@ -9,6 +9,7 @@ package io.camunda.zeebe.engine.state.immutable;
 
 import io.camunda.zeebe.engine.processing.deployment.model.element.ExecutableFlowElement;
 import io.camunda.zeebe.engine.state.deployment.DeployedProcess;
+import io.camunda.zeebe.engine.state.deployment.PersistedProcess;
 import java.util.Optional;
 import org.agrona.DirectBuffer;
 
@@ -18,6 +19,12 @@ public interface ProcessState {
 
   DeployedProcess getProcessByProcessIdAndVersion(
       DirectBuffer processId, int version, final String tenantId);
+
+  DeployedProcess getProcessByProcessIdAndVersionTag(
+      DirectBuffer processId, String versionTag, final String tenantId);
+
+  DeployedProcess getProcessByProcessIdAndDeploymentKey(
+      DirectBuffer processId, long deploymentKey, final String tenantId);
 
   DeployedProcess getProcessByKeyAndTenant(long key, String tenantId);
 
@@ -58,4 +65,18 @@ public interface ProcessState {
 
   /** TODO: Remove the cache entirely from the immutable state */
   void clearCache();
+
+  /**
+   * Iterates over all persisted processes until the visitor returns false or all processes have
+   * been visited. if {@code previousProcess} is not null, the iteration skips all processes that
+   * appear before it. The visitor is <em>not</em> called with a copy of the process to avoid
+   * needless copies of the relatively large {@link PersistedProcess} instances.
+   */
+  void forEachProcess(ProcessIdentifier previousProcess, PersistedProcessVisitor visitor);
+
+  record ProcessIdentifier(String tenantId, long processDefinitionKey) {}
+
+  interface PersistedProcessVisitor {
+    boolean visit(PersistedProcess process);
+  }
 }

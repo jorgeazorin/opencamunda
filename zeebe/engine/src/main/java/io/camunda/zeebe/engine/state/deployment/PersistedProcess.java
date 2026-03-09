@@ -30,16 +30,20 @@ public final class PersistedProcess extends UnpackedObject implements DbValue {
       new EnumProperty<>("state", PersistedProcessState.class, PersistedProcessState.ACTIVE);
   private final StringProperty tenantIdProp =
       new StringProperty("tenantId", TenantOwned.DEFAULT_TENANT_IDENTIFIER);
+  private final LongProperty deploymentKeyProp = new LongProperty("deploymentKey", -1L);
+  private final StringProperty versionTagProp = new StringProperty("versionTag", "");
 
   public PersistedProcess() {
-    super(7);
+    super(9);
     declareProperty(versionProp)
         .declareProperty(keyProp)
         .declareProperty(bpmnProcessIdProp)
         .declareProperty(resourceNameProp)
         .declareProperty(resourceProp)
         .declareProperty(stateProp)
-        .declareProperty(tenantIdProp);
+        .declareProperty(tenantIdProp)
+        .declareProperty(deploymentKeyProp)
+        .declareProperty(versionTagProp);
   }
 
   public void wrap(final ProcessRecord processRecord, final long processDefinitionKey) {
@@ -50,6 +54,8 @@ public final class PersistedProcess extends UnpackedObject implements DbValue {
     versionProp.setValue(processRecord.getVersion());
     keyProp.setValue(processDefinitionKey);
     tenantIdProp.setValue(processRecord.getTenantId());
+    deploymentKeyProp.setValue(processRecord.getDeploymentKey());
+    versionTagProp.setValue(processRecord.getVersionTag());
   }
 
   public int getVersion() {
@@ -87,6 +93,24 @@ public final class PersistedProcess extends UnpackedObject implements DbValue {
 
   public PersistedProcess setTenantId(final String tenantId) {
     tenantIdProp.setValue(tenantId);
+    return this;
+  }
+
+  public long getDeploymentKey() {
+    return deploymentKeyProp.getValue();
+  }
+
+  public PersistedProcess setDeploymentKey(final long deploymentKey) {
+    deploymentKeyProp.setValue(deploymentKey);
+    return this;
+  }
+
+  public String getVersionTag() {
+    return bufferAsString(versionTagProp.getValue());
+  }
+
+  public PersistedProcess setVersionTag(final String versionTag) {
+    versionTagProp.setValue(versionTag);
     return this;
   }
 

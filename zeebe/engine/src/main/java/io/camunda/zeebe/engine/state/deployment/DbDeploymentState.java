@@ -74,7 +74,7 @@ public final class DbDeploymentState implements MutableDeploymentState {
   public void storeDeploymentRecord(final long key, final DeploymentRecord value) {
     deploymentKey.wrapLong(key);
     deploymentRaw.setDeploymentRecord(value);
-    deploymentRawColumnFamily.insert(deploymentKey, deploymentRaw);
+    deploymentRawColumnFamily.upsert(deploymentKey, deploymentRaw);
   }
 
   @Override

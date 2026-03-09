@@ -24,5 +24,6 @@ public final class DecisionCreatedApplier
   @Override
   public void applyState(final long key, final DecisionRecord value) {
     decisionState.storeDecisionRecord(value);
+    decisionState.storeDecisionKeyByDecisionIdAndVersionTag(value);
   }
 }

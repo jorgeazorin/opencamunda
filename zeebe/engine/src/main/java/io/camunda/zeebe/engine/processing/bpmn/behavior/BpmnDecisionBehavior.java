@@ -16,8 +16,10 @@ import io.camunda.zeebe.engine.processing.common.ExpressionProcessor;
 import io.camunda.zeebe.engine.processing.common.Failure;
 import io.camunda.zeebe.engine.processing.deployment.model.element.ExecutableCalledDecision;
 import io.camunda.zeebe.engine.processing.streamprocessor.writers.StateWriter;
+import io.camunda.zeebe.engine.state.deployment.PersistedDecision;
 import io.camunda.zeebe.engine.state.immutable.ProcessingState;
 import io.camunda.zeebe.engine.state.immutable.VariableState;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeBindingType;
 import io.camunda.zeebe.msgpack.spec.MsgPackWriter;
 import io.camunda.zeebe.protocol.impl.record.value.decision.DecisionEvaluationRecord;
 import io.camunda.zeebe.protocol.record.intent.DecisionEvaluationIntent;
@@ -38,6 +40,7 @@ public final class BpmnDecisionBehavior {
   private final StateWriter stateWriter;
   private final KeyGenerator keyGenerator;
   private final ExpressionProcessor expressionBehavior;
+  private final BpmnStateBehavior stateBehavior;
 
   public BpmnDecisionBehavior(
       final DecisionBehavior decisionBehavior,
@@ -45,7 +48,8 @@ public final class BpmnDecisionBehavior {
       final EventTriggerBehavior eventTriggerBehavior,
       final StateWriter stateWriter,
       final KeyGenerator keyGenerator,
-      final ExpressionProcessor expressionBehavior) {
+      final ExpressionProcessor expressionBehavior,
+      final BpmnStateBehavior stateBehavior) {
 
     variableState = processingState.getVariableState();
     this.decisionBehavior = decisionBehavior;
@@ -53,6 +57,7 @@ public final class BpmnDecisionBehavior {
     this.stateWriter = stateWriter;
     this.keyGenerator = keyGenerator;
     this.expressionBehavior = expressionBehavior;
+    this.stateBehavior = stateBehavior;
   }
 
   /**
@@ -73,7 +78,7 @@ public final class BpmnDecisionBehavior {
 
     final var decisionId = decisionIdOrFailure.get();
     final var decisionOrFailure =
-        decisionBehavior.findDecisionByIdAndTenant(decisionId, context.getTenantId());
+        findCalledDecision(decisionId, element.getBindingType(), element.getVersionTag(), context);
     final Either<Failure, ParsedDecisionRequirementsGraph> drgOrFailure =
         decisionOrFailure
             .flatMap(decision -> decisionBehavior.findParsedDrgByDecision(decision))
@@ -122,6 +127,40 @@ public final class BpmnDecisionBehavior {
   private Either<Failure, String> evalDecisionIdExpression(
       final ExecutableCalledDecision element, final long scopeKey) {
     return expressionBehavior.evaluateStringExpression(element.getDecisionId(), scopeKey);
+  }
+
+  private Either<Failure, PersistedDecision> findCalledDecision(
+      final String decisionId,
+      final ZeebeBindingType bindingType,
+      final String versionTag,
+      final BpmnElementContext context) {
+    return switch (bindingType) {
+      case deployment -> getDecisionVersionInSameDeployment(decisionId, context);
+      case latest -> getLatestDecisionVersion(decisionId, context.getTenantId());
+      case versionTag ->
+          getLatestDecisionVersionWithVersionTag(decisionId, versionTag, context.getTenantId());
+    };
+  }
+
+  private Either<Failure, PersistedDecision> getDecisionVersionInSameDeployment(
+      final String decisionId, final BpmnElementContext context) {
+    return stateBehavior
+        .getDeploymentKey(context.getProcessDefinitionKey(), context.getTenantId())
+        .flatMap(
+            deploymentKey ->
+                decisionBehavior.findDecisionByIdAndDeploymentKeyAndTenant(
+                    decisionId, deploymentKey, context.getTenantId()));
+  }
+
+  private Either<Failure, PersistedDecision> getLatestDecisionVersion(
+      final String decisionId, final String tenantId) {
+    return decisionBehavior.findDecisionByIdAndTenant(decisionId, tenantId);
+  }
+
+  private Either<Failure, PersistedDecision> getLatestDecisionVersionWithVersionTag(
+      final String decisionId, final String versionTag, final String tenantId) {
+    return decisionBehavior.findDecisionByIdAndVersionTagAndTenant(
+        decisionId, versionTag, tenantId);
   }
 
   private void writeDecisionEvaluationEvent(

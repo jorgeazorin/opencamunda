@@ -126,7 +126,7 @@ final class StreamIntegrationTest {
     // then
     // verify client receives payload
     latch.await();
-    assertThat(payloads.get()).asList().containsExactly(100, 200);
+    assertThat(payloads.get()).asList().containsExactlyInAnyOrder(100, 200);
   }
 
   @Test

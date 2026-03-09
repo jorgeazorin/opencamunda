@@ -53,4 +53,14 @@ public interface MutableFormState extends FormState {
    * @param record the record of the form that is deleted
    */
   void deleteFormInFormVersionColumnFamily(FormRecord record);
+
+  void setMissingDeploymentKey(String tenantId, long formKey, long deploymentKey);
+
+  /**
+   * Adds a deployment-key lookup entry (CF84) mapping (formId, deploymentKey) → formKey without
+   * modifying the stored form record. Used for duplicate forms that are part of a new deployment.
+   */
+  void addDeploymentKeyMapping(String tenantId, String formId, long formKey, long deploymentKey);
+
+  void storeFormKeyByFormIdAndVersionTag(FormRecord record);
 }

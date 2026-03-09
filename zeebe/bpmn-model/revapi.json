@@ -25,6 +25,14 @@
           }
         },
         {
+          "justification": "Added versionTag support to Process interface for versioned process deployments",
+          "code": "java.method.addedToInterface",
+          "new": {
+            "matcher": "java",
+            "match": "interface io.camunda.zeebe.model.bpmn.instance.Process { ^*(**); }"
+          }
+        },
+        {
           "justification": "The abstract builders are usually not used outside of this project; a caller uses the concrete builder that inherits from the abstract builder.",
           "code": "java.class.nonFinalClassInheritsFromNewClass",
           "new": {

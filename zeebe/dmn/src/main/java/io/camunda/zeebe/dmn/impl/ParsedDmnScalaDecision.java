@@ -13,10 +13,13 @@ public final class ParsedDmnScalaDecision implements ParsedDecision {
 
   private final String decisionId;
   private final String decisionName;
+  private final String versionTag;
 
-  public ParsedDmnScalaDecision(final String decisionId, final String decisionName) {
+  public ParsedDmnScalaDecision(
+      final String decisionId, final String decisionName, final String versionTag) {
     this.decisionId = decisionId;
     this.decisionName = decisionName;
+    this.versionTag = versionTag;
   }
 
   @Override
@@ -27,5 +30,10 @@ public final class ParsedDmnScalaDecision implements ParsedDecision {
   @Override
   public String getId() {
     return decisionId;
+  }
+
+  @Override
+  public String getVersionTag() {
+    return versionTag;
   }
 }

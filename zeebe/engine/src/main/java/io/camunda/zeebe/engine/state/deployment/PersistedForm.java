@@ -30,16 +30,20 @@ public final class PersistedForm extends UnpackedObject implements DbValue {
   private final BinaryProperty checksumProp = new BinaryProperty("checksum", new UnsafeBuffer());
   private final StringProperty tenantIdProp =
       new StringProperty("tenantId", TenantOwned.DEFAULT_TENANT_IDENTIFIER);
+  private final LongProperty deploymentKeyProp = new LongProperty("deploymentKey", -1L);
+  private final StringProperty versionTagProp = new StringProperty("versionTag", "");
 
   public PersistedForm() {
-    super(7);
+    super(9);
     declareProperty(formIdProp)
         .declareProperty(versionProp)
         .declareProperty(formKeyProp)
         .declareProperty(resourceNameProp)
         .declareProperty(resourceProp)
         .declareProperty(checksumProp)
-        .declareProperty(tenantIdProp);
+        .declareProperty(tenantIdProp)
+        .declareProperty(deploymentKeyProp)
+        .declareProperty(versionTagProp);
   }
 
   public PersistedForm copy() {
@@ -51,6 +55,8 @@ public final class PersistedForm extends UnpackedObject implements DbValue {
     copy.resourceProp.setValue(BufferUtil.cloneBuffer(getResource()));
     copy.checksumProp.setValue(BufferUtil.cloneBuffer(getChecksum()));
     copy.tenantIdProp.setValue(getTenantId());
+    copy.deploymentKeyProp.setValue(getDeploymentKey());
+    copy.versionTagProp.setValue(getVersionTag());
     return copy;
   }
 
@@ -90,5 +96,23 @@ public final class PersistedForm extends UnpackedObject implements DbValue {
     resourceProp.setValue(BufferUtil.wrapArray(record.getResource()));
     checksumProp.setValue(record.getChecksumBuffer());
     tenantIdProp.setValue(record.getTenantId());
+    deploymentKeyProp.setValue(record.getDeploymentKey());
+    versionTagProp.setValue(record.getVersionTag());
+  }
+
+  public long getDeploymentKey() {
+    return deploymentKeyProp.getValue();
+  }
+
+  public void setDeploymentKey(final long deploymentKey) {
+    deploymentKeyProp.setValue(deploymentKey);
+  }
+
+  public String getVersionTag() {
+    return bufferAsString(versionTagProp.getValue());
+  }
+
+  public void setVersionTag(final String versionTag) {
+    versionTagProp.setValue(versionTag);
   }
 }
