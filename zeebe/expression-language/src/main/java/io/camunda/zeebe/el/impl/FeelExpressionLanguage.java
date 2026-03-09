@@ -136,16 +136,11 @@ public final class FeelExpressionLanguage implements ExpressionLanguage {
   private List<EvaluationWarning> extractEvaluationWarning(
       final org.camunda.feel.api.EvaluationResult evaluationResult) {
     final var warnings = new ArrayList<EvaluationWarning>();
-    evaluationResult
-        .suppressedFailures()
-        .foreach(
-            suppressedFailure -> {
-              final var warning =
-                  new FeelEvaluationWarning(
-                      suppressedFailure.failureType().toString(),
-                      suppressedFailure.failureMessage());
-              return warnings.add(warning);
-            });
+    for (final var suppressedFailure : evaluationResult.getSuppressedFailures()) {
+      warnings.add(
+          new FeelEvaluationWarning(
+              suppressedFailure.failureType().toString(), suppressedFailure.failureMessage()));
+    }
     return warnings;
   }
 }
