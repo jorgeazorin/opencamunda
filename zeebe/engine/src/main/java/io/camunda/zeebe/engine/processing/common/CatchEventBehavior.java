@@ -43,6 +43,7 @@ import io.camunda.zeebe.stream.api.state.KeyGenerator;
 import io.camunda.zeebe.util.Either;
 import io.camunda.zeebe.util.buffer.BufferUtil;
 import java.util.List;
+import java.util.function.IntSupplier;
 import java.util.function.Predicate;
 import org.agrona.DirectBuffer;
 
@@ -50,7 +51,7 @@ public final class CatchEventBehavior {
 
   private final ExpressionProcessor expressionProcessor;
   private final SubscriptionCommandSender subscriptionCommandSender;
-  private final int partitionsCount;
+  private final IntSupplier partitionsCountSupplier;
   private final StateWriter stateWriter;
   private final SideEffectWriter sideEffectWriter;
 
@@ -75,13 +76,13 @@ public final class CatchEventBehavior {
       final StateWriter stateWriter,
       final SideEffectWriter sideEffectWriter,
       final DueDateTimerChecker timerChecker,
-      final int partitionsCount,
+      final IntSupplier partitionsCountSupplier,
       final TransientPendingSubscriptionState transientProcessMessageSubscriptionState) {
     this.expressionProcessor = expressionProcessor;
     this.subscriptionCommandSender = subscriptionCommandSender;
     this.stateWriter = stateWriter;
     this.sideEffectWriter = sideEffectWriter;
-    this.partitionsCount = partitionsCount;
+    this.partitionsCountSupplier = partitionsCountSupplier;
 
     timerInstanceState = processingState.getTimerState();
     processMessageSubscriptionState = processingState.getProcessMessageSubscriptionState();
@@ -288,7 +289,7 @@ public final class CatchEventBehavior {
     final long elementInstanceKey = context.getElementInstanceKey();
 
     final int subscriptionPartitionId =
-        SubscriptionUtil.getSubscriptionPartitionId(correlationKey, partitionsCount);
+        SubscriptionUtil.getSubscriptionPartitionId(correlationKey, partitionsCountSupplier.getAsInt());
 
     subscription.setSubscriptionPartitionId(subscriptionPartitionId);
     subscription.setMessageName(messageName);

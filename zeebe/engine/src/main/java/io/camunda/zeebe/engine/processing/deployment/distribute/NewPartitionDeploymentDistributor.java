@@ -8,14 +8,15 @@
 package io.camunda.zeebe.engine.processing.deployment.distribute;
 
 import static io.camunda.zeebe.protocol.Protocol.DEPLOYMENT_PARTITION;
+import static io.camunda.zeebe.protocol.Protocol.START_PARTITION_ID;
 
 import io.camunda.zeebe.engine.state.immutable.DeploymentState;
-import io.camunda.zeebe.protocol.impl.record.value.deployment.DeploymentRecord;
 import io.camunda.zeebe.stream.api.ReadonlyStreamProcessorContext;
 import io.camunda.zeebe.stream.api.StreamProcessorLifecycleAware;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.IntSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +25,9 @@ import org.slf4j.LoggerFactory;
  * them. This runs periodically on partition 1 (DEPLOYMENT_PARTITION) and detects when the cluster's
  * partition count has increased.
  *
- * <p>When new partitions are detected, this component iterates over all deployments in the state
- * and sends a DISTRIBUTE command for each deployment to each new partition.
+ * <p>When new partitions are detected, this component iterates over all stored deployments and sends
+ * a DISTRIBUTE command for each deployment to each new partition via the
+ * {@link DeploymentDistributionCommandSender}.
  */
 public class NewPartitionDeploymentDistributor implements StreamProcessorLifecycleAware {
 
@@ -35,17 +37,19 @@ public class NewPartitionDeploymentDistributor implements StreamProcessorLifecyc
 
   private final DeploymentDistributionCommandSender commandSender;
   private final DeploymentState deploymentState;
+  private final IntSupplier partitionsCountSupplier;
   private final Set<Integer> knownPartitions;
 
   public NewPartitionDeploymentDistributor(
       final DeploymentDistributionCommandSender commandSender,
       final DeploymentState deploymentState,
+      final IntSupplier partitionsCountSupplier,
       final int initialPartitionCount) {
     this.commandSender = commandSender;
     this.deploymentState = deploymentState;
+    this.partitionsCountSupplier = partitionsCountSupplier;
     this.knownPartitions = new HashSet<>();
-    // Initialize with all partitions known at startup
-    for (int i = 1; i <= initialPartitionCount; i++) {
+    for (int i = START_PARTITION_ID; i < START_PARTITION_ID + initialPartitionCount; i++) {
       knownPartitions.add(i);
     }
   }
@@ -60,16 +64,35 @@ public class NewPartitionDeploymentDistributor implements StreamProcessorLifecyc
   }
 
   private void checkForNewPartitions() {
-    // This is a simplified check. In a full implementation, the current partition count
-    // would come from the ClusterTopology propagated via gossip to the engine context.
-    // For now, the detection of new partitions happens via the pending deployment distribution
-    // mechanism — when new partitions are created, the topology change coordinator triggers a
-    // deployment redistribution command that adds entries to the pending distribution state.
+    final int currentPartitionCount = partitionsCountSupplier.getAsInt();
+    final Set<Integer> newPartitions = new HashSet<>();
 
-    // The actual triggering happens in the AddPartitionsRequestTransformer flow:
-    // 1. New partitions are bootstrapped via PartitionBootstrapOperation
-    // 2. After all bootstrap operations complete, a follow-up command redistributes deployments
-    // 3. This redistributor picks up the pending distributions and sends them
-    LOG.trace("Checking for new partitions to distribute deployments to");
+    for (int i = START_PARTITION_ID; i < START_PARTITION_ID + currentPartitionCount; i++) {
+      if (!knownPartitions.contains(i)) {
+        newPartitions.add(i);
+      }
+    }
+
+    if (newPartitions.isEmpty()) {
+      return;
+    }
+
+    LOG.info(
+        "Detected {} new partition(s): {}. Redistributing all deployments.",
+        newPartitions.size(),
+        newPartitions);
+
+    deploymentState.foreachStoredDeployment(
+        (deploymentKey, deploymentRecord) -> {
+          for (final int partitionId : newPartitions) {
+            LOG.debug(
+                "Distributing deployment {} to new partition {}", deploymentKey, partitionId);
+            commandSender.distributeToPartition(deploymentKey, partitionId, deploymentRecord);
+          }
+        });
+
+    knownPartitions.addAll(newPartitions);
+    LOG.info("Deployment redistribution to new partitions complete. Known partitions: {}",
+        knownPartitions);
   }
 }

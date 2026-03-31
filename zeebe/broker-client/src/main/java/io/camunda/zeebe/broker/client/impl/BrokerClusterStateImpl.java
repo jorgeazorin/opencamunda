@@ -54,6 +54,7 @@ public final class BrokerClusterStateImpl implements BrokerClusterState {
       clusterSize = topology.clusterSize;
       partitionsCount = topology.partitionsCount;
       replicationFactor = topology.replicationFactor;
+      activeRoutingPartitionCounts = topology.activeRoutingPartitionCounts;
     }
   }
 

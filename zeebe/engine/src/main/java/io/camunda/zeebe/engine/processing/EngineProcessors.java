@@ -23,6 +23,7 @@ import io.camunda.zeebe.engine.processing.deployment.distribute.DeploymentDistri
 import io.camunda.zeebe.engine.processing.deployment.distribute.DeploymentDistributionCommandSender;
 import io.camunda.zeebe.engine.processing.deployment.distribute.DeploymentDistributionCompleteProcessor;
 import io.camunda.zeebe.engine.processing.deployment.distribute.DeploymentRedistributor;
+import io.camunda.zeebe.engine.processing.deployment.distribute.NewPartitionDeploymentDistributor;
 import io.camunda.zeebe.engine.processing.distribution.CommandDistributionAcknowledgeProcessor;
 import io.camunda.zeebe.engine.processing.distribution.CommandRedistributor;
 import io.camunda.zeebe.engine.processing.dmn.DecisionEvaluationEvaluteProcessor;
@@ -54,6 +55,7 @@ import io.camunda.zeebe.protocol.record.intent.SignalIntent;
 import io.camunda.zeebe.stream.api.InterPartitionCommandSender;
 import io.camunda.zeebe.stream.api.state.KeyGenerator;
 import io.camunda.zeebe.util.FeatureFlags;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public final class EngineProcessors {
@@ -62,7 +64,7 @@ public final class EngineProcessors {
 
   public static TypedRecordProcessors createEngineProcessors(
       final TypedRecordProcessorContext typedRecordProcessorContext,
-      final int partitionsCount,
+      final IntSupplier partitionsCountSupplier,
       final SubscriptionCommandSender subscriptionCommandSender,
       final InterPartitionCommandSender interPartitionCommandSender,
       final FeatureFlags featureFlags,
@@ -98,7 +100,7 @@ public final class EngineProcessors {
             processingState,
             writers,
             subscriptionCommandSender,
-            partitionsCount,
+            partitionsCountSupplier,
             timerChecker,
             jobStreamer,
             jobMetrics,
@@ -109,7 +111,7 @@ public final class EngineProcessors {
         new CommandDistributionBehavior(
             writers,
             typedRecordProcessorContext.getPartitionId(),
-            partitionsCount,
+            partitionsCountSupplier,
             interPartitionCommandSender);
 
     final var deploymentDistributionCommandSender =
@@ -125,6 +127,7 @@ public final class EngineProcessors {
         processingState.getKeyGenerator(),
         featureFlags,
         commandDistributionBehavior,
+        partitionsCountSupplier,
         config);
     addMessageProcessors(
         bpmnBehaviors,
@@ -196,7 +199,7 @@ public final class EngineProcessors {
       final MutableProcessingState processingState,
       final Writers writers,
       final SubscriptionCommandSender subscriptionCommandSender,
-      final int partitionsCount,
+      final IntSupplier partitionsCountSupplier,
       final DueDateTimerChecker timerChecker,
       final JobStreamer jobStreamer,
       final JobProcessingMetrics jobMetrics,
@@ -208,7 +211,7 @@ public final class EngineProcessors {
         jobMetrics,
         decisionBehavior,
         subscriptionCommandSender,
-        partitionsCount,
+        partitionsCountSupplier,
         timerChecker,
         jobStreamer,
         transientProcessMessageSubscriptionState);
@@ -248,6 +251,7 @@ public final class EngineProcessors {
       final KeyGenerator keyGenerator,
       final FeatureFlags featureFlags,
       final CommandDistributionBehavior distributionBehavior,
+      final IntSupplier partitionsCountSupplier,
       final EngineConfiguration config) {
 
     // on deployment partition CREATE Command is received and processed
@@ -269,6 +273,15 @@ public final class EngineProcessors {
             deploymentDistributionCommandSender,
             scheduledTaskStateSupplier.get().getDeploymentState());
     typedRecordProcessors.withListener(deploymentRedistributor);
+
+    // monitors for new partitions and redistributes existing deployments to them
+    final var newPartitionDistributor =
+        new NewPartitionDeploymentDistributor(
+            deploymentDistributionCommandSender,
+            scheduledTaskStateSupplier.get().getDeploymentState(),
+            partitionsCountSupplier,
+            partitionsCountSupplier.getAsInt());
+    typedRecordProcessors.withListener(newPartitionDistributor);
 
     // on other partitions DISTRIBUTE command is received and processed
     final DeploymentDistributeProcessor deploymentDistributeProcessor =

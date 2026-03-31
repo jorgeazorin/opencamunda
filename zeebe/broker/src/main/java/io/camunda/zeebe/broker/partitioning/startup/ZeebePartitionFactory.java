@@ -224,7 +224,7 @@ public final class ZeebePartitionFactory {
 
       return EngineProcessors.createEngineProcessors(
           recordProcessorContext,
-          localBroker.getPartitionsCount(),
+          localBroker::getPartitionsCount,
           subscriptionCommandSender,
           partitionCommandSender,
           featureFlags,

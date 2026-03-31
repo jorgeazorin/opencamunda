@@ -166,8 +166,14 @@ public record ClusterTopology(
               .flatMap(Optional::stream)
               .reduce(ClusterChangePlan::merge);
 
+      // Preserve the routing state with more generations (i.e. the more up-to-date one)
+      final var mergedRoutingState =
+          messageRoutingState.generations().size() >= other.messageRoutingState.generations().size()
+              ? messageRoutingState
+              : other.messageRoutingState;
+
       return new ClusterTopology(
-          version, ImmutableMap.copyOf(mergedMembers), lastChange, mergedChanges);
+          version, ImmutableMap.copyOf(mergedMembers), lastChange, mergedChanges, mergedRoutingState);
     }
   }
 
@@ -324,16 +330,19 @@ public record ClusterTopology(
    */
   public ClusterTopology addRoutingGeneration(final int newPartitionCount) {
     final var updatedRouting = messageRoutingState.addGeneration(newPartitionCount);
-    return new ClusterTopology(version, members, lastChange, pendingChanges, updatedRouting);
+    return new ClusterTopology(
+        version + 1, members, lastChange, pendingChanges, updatedRouting);
   }
 
   /**
-   * Retires a routing generation when all its subscriptions have been fulfilled.
+   * Retires a routing generation when all its subscriptions have been fulfilled. Automatically
+   * compacts retired generations after retirement.
    *
    * @param generationId the generation to retire
    */
   public ClusterTopology retireRoutingGeneration(final int generationId) {
-    final var updatedRouting = messageRoutingState.retireGeneration(generationId);
-    return new ClusterTopology(version, members, lastChange, pendingChanges, updatedRouting);
+    final var updatedRouting = messageRoutingState.retireGeneration(generationId).compact();
+    return new ClusterTopology(
+        version + 1, members, lastChange, pendingChanges, updatedRouting);
   }
 }

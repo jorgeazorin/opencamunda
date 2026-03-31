@@ -12,6 +12,7 @@ import io.camunda.zeebe.topology.state.ClusterTopology;
 import io.camunda.zeebe.topology.state.TopologyChangeOperation;
 import io.camunda.zeebe.util.Either;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 public interface TopologyChangeCoordinator {
 
@@ -73,6 +74,15 @@ public interface TopologyChangeCoordinator {
      */
     Either<Exception, List<TopologyChangeOperation>> operations(
         final ClusterTopology currentTopology);
+
+    /**
+     * Optional topology transformer applied atomically BEFORE {@code startTopologyChange}. This
+     * allows requests to modify the topology state (e.g. adding a routing generation) together
+     * with the change plan in a single atomic update.
+     */
+    default UnaryOperator<ClusterTopology> preApplyTransformer() {
+      return UnaryOperator.identity();
+    }
 
     default boolean isForced() {
       return false;

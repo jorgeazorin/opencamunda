@@ -20,6 +20,7 @@ import io.camunda.zeebe.protocol.ZbColumnFamilies;
 import io.camunda.zeebe.protocol.impl.record.value.deployment.DeploymentRecord;
 import io.camunda.zeebe.protocol.record.value.TenantOwned;
 import io.camunda.zeebe.util.buffer.BufferUtil;
+import java.util.function.BiConsumer;
 import org.agrona.DirectBuffer;
 import org.agrona.collections.MutableBoolean;
 import org.agrona.collections.MutableLong;
@@ -150,5 +151,11 @@ public final class DbDeploymentState implements MutableDeploymentState {
 
           pendingDeploymentVisitor.visit(deploymentKey, partitionId, lastDeployment.get());
         });
+  }
+
+  @Override
+  public void foreachStoredDeployment(final BiConsumer<Long, DeploymentRecord> visitor) {
+    deploymentRawColumnFamily.forEach(
+        (key, raw) -> visitor.accept(key.getValue(), raw.getDeploymentRecord()));
   }
 }

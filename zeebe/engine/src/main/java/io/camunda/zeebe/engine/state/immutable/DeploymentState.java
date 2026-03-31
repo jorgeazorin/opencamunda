@@ -8,6 +8,7 @@
 package io.camunda.zeebe.engine.state.immutable;
 
 import io.camunda.zeebe.protocol.impl.record.value.deployment.DeploymentRecord;
+import java.util.function.BiConsumer;
 import org.agrona.DirectBuffer;
 
 public interface DeploymentState {
@@ -33,6 +34,12 @@ public interface DeploymentState {
   DeploymentRecord getStoredDeploymentRecord(long deploymentKey);
 
   void foreachPendingDeploymentDistribution(PendingDeploymentVisitor pendingDeploymentVisitor);
+
+  /**
+   * Iterates over all stored deployment records. Used for redistributing deployments to newly added
+   * partitions.
+   */
+  void foreachStoredDeployment(BiConsumer<Long, DeploymentRecord> visitor);
 
   @FunctionalInterface
   interface PendingDeploymentVisitor {

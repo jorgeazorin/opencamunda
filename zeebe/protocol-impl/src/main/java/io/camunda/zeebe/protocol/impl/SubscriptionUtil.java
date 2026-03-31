@@ -41,8 +41,8 @@ public final class SubscriptionUtil {
   public static int getSubscriptionPartitionId(
       final DirectBuffer correlationKey, final int partitionCount) {
     final int hashCode = getSubscriptionHashCode(correlationKey);
-    // partition ids range from START_PARTITION_ID .. START_PARTITION_ID + partitionCount
-    return Math.abs(hashCode % partitionCount) + START_PARTITION_ID;
+    // Use Math.floorMod to avoid negative results when hashCode == Integer.MIN_VALUE
+    return Math.floorMod(hashCode, partitionCount) + START_PARTITION_ID;
   }
 
   /**
@@ -74,7 +74,7 @@ public final class SubscriptionUtil {
     final int hashCode = getSubscriptionHashCode(correlationKey);
     final Set<Integer> partitionIds = new TreeSet<>();
     for (final int partitionCount : activePartitionCounts) {
-      partitionIds.add(Math.abs(hashCode % partitionCount) + START_PARTITION_ID);
+      partitionIds.add(Math.floorMod(hashCode, partitionCount) + START_PARTITION_ID);
     }
     return partitionIds;
   }

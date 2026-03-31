@@ -116,7 +116,7 @@ public class TopologyChangeCoordinatorImpl implements TopologyChangeCoordinator 
                       }
 
                       applyOrDryRunOnTopology(
-                          dryRun, currentClusterTopology, generatedOperations.get(), future);
+                          dryRun, currentClusterTopology, generatedOperations.get(), request, future);
                     },
                     executor));
     return future;
@@ -126,6 +126,7 @@ public class TopologyChangeCoordinatorImpl implements TopologyChangeCoordinator 
       final boolean dryRun,
       final ClusterTopology currentClusterTopology,
       final List<TopologyChangeOperation> operations,
+      final TopologyChangeRequest request,
       final ActorFuture<TopologyChangeResult> future) {
     if (operations.isEmpty()) {
       // No operations to apply
@@ -151,10 +152,11 @@ public class TopologyChangeCoordinatorImpl implements TopologyChangeCoordinator 
           // Validation was successful. If it's not a dry-run, apply the changes.
           final ActorFuture<ClusterTopology> applyFuture = executor.createFuture();
           if (dryRun) {
-            applyFuture.complete(currentClusterTopology.startTopologyChange(operations));
+            final var preApplied = request.preApplyTransformer().apply(currentClusterTopology);
+            applyFuture.complete(preApplied.startTopologyChange(operations));
           } else {
             applyTopologyChange(
-                operations, currentClusterTopology, simulatedFinalTopology, applyFuture);
+                operations, request, currentClusterTopology, simulatedFinalTopology, applyFuture);
           }
 
           applyFuture.onComplete(
@@ -213,6 +215,7 @@ public class TopologyChangeCoordinatorImpl implements TopologyChangeCoordinator 
 
   private void applyTopologyChange(
       final List<TopologyChangeOperation> operations,
+      final TopologyChangeRequest request,
       final ClusterTopology currentClusterTopology,
       final ClusterTopology simulatedFinalTopology,
       final ActorFuture<ClusterTopology> future) {
@@ -225,7 +228,8 @@ public class TopologyChangeCoordinatorImpl implements TopologyChangeCoordinator 
                         throw new ConcurrentModificationException(
                             "Topology changed while applying the change. Please retry.");
                       }
-                      return clusterTopology.startTopologyChange(operations);
+                      final var preApplied = request.preApplyTransformer().apply(clusterTopology);
+                      return preApplied.startTopologyChange(operations);
                     })
                 .onComplete(
                     (topologyWithPendingOperations, errorOnUpdatingTopology) -> {

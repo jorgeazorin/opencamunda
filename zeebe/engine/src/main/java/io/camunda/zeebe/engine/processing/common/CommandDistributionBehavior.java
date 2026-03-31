@@ -18,40 +18,34 @@ import io.camunda.zeebe.protocol.record.intent.CommandDistributionIntent;
 import io.camunda.zeebe.stream.api.InterPartitionCommandSender;
 import io.camunda.zeebe.stream.api.records.TypedRecord;
 import java.util.List;
+import java.util.function.IntSupplier;
 import java.util.stream.IntStream;
 
 public final class CommandDistributionBehavior {
 
   private final StateWriter stateWriter;
   private final SideEffectWriter sideEffectWriter;
-  private final List<Integer> otherPartitions;
   private final InterPartitionCommandSender interPartitionCommandSender;
   private final int currentPartitionId;
-  private final int partitionsCount;
+  private final IntSupplier partitionsCountSupplier;
 
   public CommandDistributionBehavior(
       final Writers writers,
       final int currentPartition,
-      final int partitionsCount,
+      final IntSupplier partitionsCountSupplier,
       final InterPartitionCommandSender partitionCommandSender) {
     stateWriter = writers.state();
     sideEffectWriter = writers.sideEffect();
     interPartitionCommandSender = partitionCommandSender;
-    this.partitionsCount = partitionsCount;
-    otherPartitions =
-        IntStream.range(Protocol.START_PARTITION_ID, Protocol.START_PARTITION_ID + partitionsCount)
-            .filter(partition -> partition != currentPartition)
-            .boxed()
-            .toList();
+    this.partitionsCountSupplier = partitionsCountSupplier;
     currentPartitionId = currentPartition;
   }
 
   /**
-   * Returns the list of other partitions known at construction time. For distributing commands to
-   * dynamically added partitions, use {@link #getOtherPartitionsForCount(int)} instead.
+   * Returns the list of other partitions based on the current dynamic partition count.
    */
   public List<Integer> getOtherPartitions() {
-    return otherPartitions;
+    return getOtherPartitionsForCount(partitionsCountSupplier.getAsInt());
   }
 
   /**
@@ -75,7 +69,8 @@ public final class CommandDistributionBehavior {
    */
   public <T extends UnifiedRecordValue> void distributeCommand(
       final long distributionKey, final TypedRecord<T> command) {
-    if (otherPartitions.isEmpty()) {
+    final var currentOtherPartitions = getOtherPartitions();
+    if (currentOtherPartitions.isEmpty()) {
       return;
     }
 
@@ -89,7 +84,7 @@ public final class CommandDistributionBehavior {
     stateWriter.appendFollowUpEvent(
         distributionKey, CommandDistributionIntent.STARTED, distributionRecord);
 
-    otherPartitions.forEach(
+    currentOtherPartitions.forEach(
         (partition) ->
             distributeToPartition(command, partition, distributionRecord, distributionKey));
   }

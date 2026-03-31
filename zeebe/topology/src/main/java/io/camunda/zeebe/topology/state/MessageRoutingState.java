@@ -127,6 +127,12 @@ public record MessageRoutingState(List<RoutingGeneration> generations) {
       throw new IllegalArgumentException("Cannot retire the current generation");
     }
 
+    final boolean exists = generations.stream().anyMatch(g -> g.generationId() == generationId);
+    if (!exists) {
+      throw new IllegalArgumentException(
+          "Cannot retire generation %d: no such generation exists".formatted(generationId));
+    }
+
     final var updated =
         generations.stream()
             .map(
@@ -136,6 +142,20 @@ public record MessageRoutingState(List<RoutingGeneration> generations) {
                         : g)
             .toList();
     return new MessageRoutingState(updated);
+  }
+
+  /**
+   * Removes all retired generations from the list. This prevents unbounded growth of the generations
+   * list after multiple scaling operations.
+   *
+   * @return updated state with retired generations removed
+   */
+  public MessageRoutingState compact() {
+    final var active = generations.stream().filter(g -> !g.retired()).toList();
+    if (active.size() == generations.size()) {
+      return this;
+    }
+    return new MessageRoutingState(Collections.unmodifiableList(active));
   }
 
   /**

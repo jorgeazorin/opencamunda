@@ -15,6 +15,7 @@ import io.camunda.zeebe.broker.client.api.BrokerRejectionException;
 import io.camunda.zeebe.broker.client.api.BrokerResponseException;
 import io.camunda.zeebe.broker.client.api.BrokerTopologyManager;
 import io.camunda.zeebe.broker.client.api.IllegalBrokerResponseException;
+import io.camunda.zeebe.broker.client.api.MultiPartitionDispatchStrategy;
 import io.camunda.zeebe.broker.client.api.NoTopologyAvailableException;
 import io.camunda.zeebe.broker.client.api.PartitionNotFoundException;
 import io.camunda.zeebe.broker.client.api.RequestDispatchStrategy;
@@ -29,10 +30,14 @@ import io.camunda.zeebe.transport.ClientRequest;
 import io.camunda.zeebe.transport.ClientTransport;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
+import org.agrona.DirectBuffer;
 import org.agrona.DirectBuffer;
 
 final class BrokerRequestManager extends Actor {
@@ -113,6 +118,23 @@ final class BrokerRequestManager extends Actor {
       final CompletableFuture<BrokerResponse<T>> returnFuture,
       final TransportRequestSender sender,
       final Duration requestTimeout) {
+
+    // Check if the dispatch strategy requires multi-partition fan-out
+    final var strategy = request.requestDispatchStrategy().orElse(null);
+    if (strategy instanceof final MultiPartitionDispatchStrategy multiStrategy
+        && request.requiresPartitionId()
+        && !request.addressesSpecificPartition()
+        && request.getBrokerId().isEmpty()) {
+      try {
+        final Set<Integer> partitions = multiStrategy.determinePartitions(topologyManager);
+        if (partitions.size() > 1) {
+          sendToMultiplePartitions(request, returnFuture, sender, requestTimeout, partitions);
+          return;
+        }
+      } catch (final NoTopologyAvailableException e) {
+        // Fall through to normal path
+      }
+    }
 
     final BrokerAddressProvider nodeIdProvider;
     try {
@@ -204,6 +226,58 @@ final class BrokerRequestManager extends Actor {
     }
 
     return RequestResult.failed(ErrorCode.NULL_VAL);
+  }
+
+  /**
+   * Sends the same request to multiple partitions (fan-out). This is used during partition scaling
+   * transitions when a message must be delivered to all partitions that could hold a matching
+   * subscription. The first successful response is returned; if all fail, the last error is
+   * propagated.
+   */
+  private <T> void sendToMultiplePartitions(
+      final BrokerRequest<T> request,
+      final CompletableFuture<BrokerResponse<T>> returnFuture,
+      final TransportRequestSender sender,
+      final Duration requestTimeout,
+      final Set<Integer> targetPartitions) {
+    final var firstResponse = new AtomicReference<BrokerResponse<T>>();
+    final var lastError = new AtomicReference<Throwable>();
+    final var remaining = new AtomicInteger(targetPartitions.size());
+
+    for (final int partitionId : targetPartitions) {
+      request.setPartitionId(partitionId);
+      final var nodeIdProvider = new BrokerAddressProvider(partitionId);
+
+      final ActorFuture<DirectBuffer> responseFuture =
+          sender.send(clientTransport, nodeIdProvider, request, requestTimeout);
+
+      actor.runOnCompletion(
+          responseFuture,
+          (clientResponse, error) -> {
+            if (error == null) {
+              try {
+                final BrokerResponse<T> response = request.getResponse(clientResponse);
+                if (response.isResponse()) {
+                  firstResponse.compareAndSet(null, response);
+                }
+              } catch (final RuntimeException e) {
+                lastError.set(e);
+              }
+            } else {
+              lastError.set(error);
+            }
+            if (remaining.decrementAndGet() == 0) {
+              final var response = firstResponse.get();
+              if (response != null) {
+                returnFuture.complete(response);
+              } else {
+                final var err = lastError.get();
+                returnFuture.completeExceptionally(
+                    err != null ? err : new NoTopologyAvailableException("All partitions failed"));
+              }
+            }
+          });
+    }
   }
 
   private BrokerAddressProvider determineBrokerNodeIdProvider(final BrokerRequest<?> request) {

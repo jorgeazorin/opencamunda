@@ -40,6 +40,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -396,10 +397,14 @@ public final class PartitionManagerImpl implements PartitionManager, PartitionCh
             .map(Entry::getKey)
             .toList();
 
-    MemberId primary = null;
-    if (primaries.size() == 1) {
-      primary = primaries.get(0);
-    }
+    // If multiple members share the highest priority, pick the one with the lowest ID
+    // to ensure deterministic primary selection.
+    final MemberId primary =
+        primaries.size() == 1
+            ? primaries.get(0)
+            : primaries.stream()
+                .min(Comparator.comparing(MemberId::id))
+                .orElse(null);
 
     final var partitionMetadata =
         new PartitionMetadata(

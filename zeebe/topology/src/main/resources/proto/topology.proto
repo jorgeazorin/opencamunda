@@ -14,6 +14,17 @@ message ClusterTopology {
   map<string, MemberState> members = 2;
   CompletedChange lastChange = 3;
   ClusterChangePlan currentChange = 4;
+  MessageRoutingState messageRoutingState = 5;
+}
+
+message MessageRoutingState {
+  repeated RoutingGeneration generations = 1;
+}
+
+message RoutingGeneration {
+  int32 generationId = 1;
+  int32 partitionCount = 2;
+  bool retired = 3;
 }
 
 message MemberState {
@@ -55,6 +66,7 @@ message TopologyChangeOperation {
     PartitionReconfigurePriorityOperation partitionReconfigurePriority = 6;
     PartitionForceReconfigureOperation partitionForceReconfigure = 7;
     MemberRemoveOperation memberRemove = 8;
+    PartitionBootstrapOperation partitionBootstrap = 9;
   }
 }
 
@@ -90,12 +102,19 @@ message MemberRemoveOperation {
   string memberToRemove = 1;
 }
 
+message PartitionBootstrapOperation {
+  int32 partitionId = 1;
+  int32 priority = 2;
+  map<string, int32> membersWithPriority = 3;
+}
+
 enum State {
   UNKNOWN = 0;
   JOINING = 1;
   ACTIVE = 2;
   LEAVING = 3;
   LEFT = 4;
+  BOOTSTRAPPING = 5;
 }
 
 enum ChangeStatus {
@@ -105,5 +124,3 @@ enum ChangeStatus {
   FAILED = 3;
   CANCELLED = 4;
 }
-
-
