@@ -272,6 +272,17 @@ public final class BrokerClusterStateImpl implements BrokerClusterState {
     }
   }
 
+  private Set<Integer> activeRoutingPartitionCounts;
+
+  public void setActiveRoutingPartitionCounts(final Set<Integer> counts) {
+    this.activeRoutingPartitionCounts = counts;
+  }
+
+  @Override
+  public Set<Integer> getActiveRoutingPartitionCounts() {
+    return activeRoutingPartitionCounts;
+  }
+
   @Override
   public String toString() {
     return "BrokerClusterStateImpl{"

@@ -59,4 +59,17 @@ public interface PartitionChangeExecutor {
    * @return a future that completes when the partition is reconfigured
    */
   ActorFuture<Void> forceReconfigure(final int partitionId, final Collection<MemberId> members);
+
+  /**
+   * Bootstrap a brand-new partition that does not yet exist in the cluster. This creates a new Raft
+   * group from scratch with an empty log and state.
+   *
+   * <p>This differs from {@link #join(int, Map)} in that join expects the partition to already
+   * exist with at least one active member, while bootstrap creates it from nothing.
+   *
+   * @param partitionId id of the new partition
+   * @param membersWithPriority all initial members of the new Raft group with their priorities
+   * @return a future that completes when the partition is bootstrapped and active
+   */
+  ActorFuture<Void> bootstrap(int partitionId, Map<MemberId, Integer> membersWithPriority);
 }

@@ -177,11 +177,23 @@ public class RestoreManager {
               .descriptor()
               .orElseThrow(
                   () -> new BackupNotValidException(status, "Backup does not have a descriptor"));
-      if (descriptor.numberOfPartitions() != expectedPartitionCount) {
+      if (descriptor.numberOfPartitions() > expectedPartitionCount) {
         throw new BackupNotValidException(
             status,
-            "Expected backup to have %d partitions, but has %d"
+            "Expected backup to have at most %d partitions, but has %d. "
+                + "Cannot restore a backup with more partitions than the current cluster."
                 .formatted(expectedPartitionCount, descriptor.numberOfPartitions()));
+      }
+      // Allow restoring a backup with fewer partitions — the additional partitions in the
+      // current cluster (added via partition scaling) will start empty after restore.
+      if (descriptor.numberOfPartitions() < expectedPartitionCount) {
+        LOG.warn(
+            "Restoring backup with {} partitions into cluster with {} partitions. "
+                + "Partitions {} through {} will be empty after restore.",
+            descriptor.numberOfPartitions(),
+            expectedPartitionCount,
+            descriptor.numberOfPartitions() + 1,
+            expectedPartitionCount);
       }
       return status;
     }

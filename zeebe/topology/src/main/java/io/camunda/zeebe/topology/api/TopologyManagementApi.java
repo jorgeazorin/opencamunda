@@ -9,6 +9,7 @@ package io.camunda.zeebe.topology.api;
 
 import io.camunda.zeebe.scheduler.future.ActorFuture;
 import io.camunda.zeebe.topology.api.TopologyManagementRequest.AddMembersRequest;
+import io.camunda.zeebe.topology.api.TopologyManagementRequest.AddPartitionsRequest;
 import io.camunda.zeebe.topology.api.TopologyManagementRequest.JoinPartitionRequest;
 import io.camunda.zeebe.topology.api.TopologyManagementRequest.LeavePartitionRequest;
 import io.camunda.zeebe.topology.api.TopologyManagementRequest.ReassignPartitionsRequest;
@@ -43,6 +44,13 @@ public interface TopologyManagementApi {
 
   ActorFuture<ClusterTopology> cancelTopologyChange(
       TopologyManagementRequest.CancelChangeRequest cancelChangeRequest);
+
+  /**
+   * Adds new partitions to the cluster. The new partitions are bootstrapped from scratch and
+   * distributed across the provided members. A new routing generation is created so that existing
+   * message subscriptions are not disrupted.
+   */
+  ActorFuture<TopologyChangeResponse> addPartitions(AddPartitionsRequest addPartitionsRequest);
 
   ActorFuture<ClusterTopology> getTopology();
 }

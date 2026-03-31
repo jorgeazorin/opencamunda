@@ -237,6 +237,12 @@ public final class BrokerTopologyManagerImpl extends Actor
             topologyToUpdate.setPartitionsCount(newPartitionsCount);
             topologyToUpdate.setReplicationFactor(newReplicationFactor);
           }
+
+          // Propagate active routing partition counts for multi-generation message routing
+          final var routingState = clusterTopology.messageRoutingState();
+          if (routingState != null && !routingState.generations().isEmpty()) {
+            topologyToUpdate.setActiveRoutingPartitionCounts(routingState.activePartitionCounts());
+          }
         });
   }
 }

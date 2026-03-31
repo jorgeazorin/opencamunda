@@ -11,6 +11,7 @@ import io.atomix.cluster.MemberId;
 import io.camunda.zeebe.scheduler.ConcurrencyControl;
 import io.camunda.zeebe.scheduler.future.ActorFuture;
 import io.camunda.zeebe.topology.api.TopologyManagementRequest.AddMembersRequest;
+import io.camunda.zeebe.topology.api.TopologyManagementRequest.AddPartitionsRequest;
 import io.camunda.zeebe.topology.api.TopologyManagementRequest.CancelChangeRequest;
 import io.camunda.zeebe.topology.api.TopologyManagementRequest.JoinPartitionRequest;
 import io.camunda.zeebe.topology.api.TopologyManagementRequest.LeavePartitionRequest;
@@ -127,6 +128,17 @@ public final class TopologyManagementRequestsHandler implements TopologyManageme
   public ActorFuture<ClusterTopology> cancelTopologyChange(
       final CancelChangeRequest changeRequest) {
     return coordinator.cancelChange(changeRequest.changeId());
+  }
+
+  @Override
+  public ActorFuture<TopologyChangeResponse> addPartitions(
+      final AddPartitionsRequest addPartitionsRequest) {
+    return handleRequest(
+        addPartitionsRequest.dryRun(),
+        new AddPartitionsRequestTransformer(
+            addPartitionsRequest.newPartitionCount(),
+            addPartitionsRequest.members(),
+            addPartitionsRequest.replicationFactor()));
   }
 
   @Override

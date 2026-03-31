@@ -37,13 +37,28 @@ public record ClusterTopology(
     long version,
     Map<MemberId, MemberState> members,
     Optional<CompletedChange> lastChange,
-    Optional<ClusterChangePlan> pendingChanges) {
+    Optional<ClusterChangePlan> pendingChanges,
+    MessageRoutingState messageRoutingState) {
 
   public static final int INITIAL_VERSION = 1;
   private static final int UNINITIALIZED_VERSION = -1;
 
+  /** Backwards-compatible constructor for existing code that doesn't pass routing state. */
+  public ClusterTopology(
+      final long version,
+      final Map<MemberId, MemberState> members,
+      final Optional<CompletedChange> lastChange,
+      final Optional<ClusterChangePlan> pendingChanges) {
+    this(version, members, lastChange, pendingChanges, MessageRoutingState.uninitialized());
+  }
+
   public static ClusterTopology uninitialized() {
-    return new ClusterTopology(UNINITIALIZED_VERSION, Map.of(), Optional.empty(), Optional.empty());
+    return new ClusterTopology(
+        UNINITIALIZED_VERSION,
+        Map.of(),
+        Optional.empty(),
+        Optional.empty(),
+        MessageRoutingState.uninitialized());
   }
 
   public boolean isUninitialized() {
@@ -51,7 +66,12 @@ public record ClusterTopology(
   }
 
   public static ClusterTopology init() {
-    return new ClusterTopology(INITIAL_VERSION, Map.of(), Optional.empty(), Optional.empty());
+    return new ClusterTopology(
+        INITIAL_VERSION,
+        Map.of(),
+        Optional.empty(),
+        Optional.empty(),
+        MessageRoutingState.uninitialized());
   }
 
   public ClusterTopology addMember(final MemberId memberId, final MemberState state) {
@@ -283,5 +303,37 @@ public record ClusterTopology(
     } else {
       return this;
     }
+  }
+
+  /**
+   * Initializes the message routing state if it hasn't been set yet. This is called during the
+   * first partition scaling operation or during bootstrap.
+   */
+  public ClusterTopology initializeMessageRouting(final int partitionCount) {
+    if (!messageRoutingState.generations().isEmpty()) {
+      return this;
+    }
+    return new ClusterTopology(
+        version, members, lastChange, pendingChanges, MessageRoutingState.init(partitionCount));
+  }
+
+  /**
+   * Adds a new routing generation after partitions have been scaled up.
+   *
+   * @param newPartitionCount the new total partition count after scaling
+   */
+  public ClusterTopology addRoutingGeneration(final int newPartitionCount) {
+    final var updatedRouting = messageRoutingState.addGeneration(newPartitionCount);
+    return new ClusterTopology(version, members, lastChange, pendingChanges, updatedRouting);
+  }
+
+  /**
+   * Retires a routing generation when all its subscriptions have been fulfilled.
+   *
+   * @param generationId the generation to retire
+   */
+  public ClusterTopology retireRoutingGeneration(final int generationId) {
+    final var updatedRouting = messageRoutingState.retireGeneration(generationId);
+    return new ClusterTopology(version, members, lastChange, pendingChanges, updatedRouting);
   }
 }

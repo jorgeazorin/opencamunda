@@ -16,6 +16,7 @@ import io.camunda.zeebe.topology.state.TopologyChangeOperation;
 import io.camunda.zeebe.topology.state.TopologyChangeOperation.MemberJoinOperation;
 import io.camunda.zeebe.topology.state.TopologyChangeOperation.MemberLeaveOperation;
 import io.camunda.zeebe.topology.state.TopologyChangeOperation.MemberRemoveOperation;
+import io.camunda.zeebe.topology.state.TopologyChangeOperation.PartitionChangeOperation.PartitionBootstrapOperation;
 import io.camunda.zeebe.topology.state.TopologyChangeOperation.PartitionChangeOperation.PartitionForceReconfigureOperation;
 import io.camunda.zeebe.topology.state.TopologyChangeOperation.PartitionChangeOperation.PartitionJoinOperation;
 import io.camunda.zeebe.topology.state.TopologyChangeOperation.PartitionChangeOperation.PartitionLeaveOperation;
@@ -62,6 +63,13 @@ public class TopologyChangeAppliersImpl implements TopologyChangeAppliers {
               forceReconfigureOperation.partitionId(),
               forceReconfigureOperation.memberId(),
               forceReconfigureOperation.members(),
+              partitionChangeExecutor);
+      case final PartitionBootstrapOperation bootstrapOperation ->
+          new PartitionBootstrapApplier(
+              bootstrapOperation.partitionId(),
+              bootstrapOperation.priority(),
+              bootstrapOperation.memberId(),
+              bootstrapOperation.membersWithPriority(),
               partitionChangeExecutor);
       case final MemberRemoveOperation memberRemoveOperation ->
           // Reuse MemberLeaveApplier, only difference is that the member applying the operation is

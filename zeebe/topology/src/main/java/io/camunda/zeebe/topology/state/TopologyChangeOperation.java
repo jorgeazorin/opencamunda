@@ -9,6 +9,7 @@ package io.camunda.zeebe.topology.state;
 
 import io.atomix.cluster.MemberId;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * An operation that changes the topology. The operation could be a member join or leave a cluster,
@@ -83,6 +84,22 @@ public sealed interface TopologyChangeOperation {
      */
     record PartitionForceReconfigureOperation(
         MemberId memberId, int partitionId, Collection<MemberId> members)
+        implements PartitionChangeOperation {}
+
+    /**
+     * Operation to bootstrap a brand-new partition that does not yet exist in the cluster. Unlike
+     * {@link PartitionJoinOperation}, this creates Raft group from scratch (empty log/state).
+     *
+     * @param memberId the member that will bootstrap this partition
+     * @param partitionId the new partition id (must not already exist)
+     * @param priority raft priority election value for this member
+     * @param membersWithPriority all initial members of the new Raft group with their priorities
+     */
+    record PartitionBootstrapOperation(
+        MemberId memberId,
+        int partitionId,
+        int priority,
+        Map<MemberId, Integer> membersWithPriority)
         implements PartitionChangeOperation {}
   }
 }

@@ -27,6 +27,7 @@ public final class CommandDistributionBehavior {
   private final List<Integer> otherPartitions;
   private final InterPartitionCommandSender interPartitionCommandSender;
   private final int currentPartitionId;
+  private final int partitionsCount;
 
   public CommandDistributionBehavior(
       final Writers writers,
@@ -36,12 +37,33 @@ public final class CommandDistributionBehavior {
     stateWriter = writers.state();
     sideEffectWriter = writers.sideEffect();
     interPartitionCommandSender = partitionCommandSender;
+    this.partitionsCount = partitionsCount;
     otherPartitions =
         IntStream.range(Protocol.START_PARTITION_ID, Protocol.START_PARTITION_ID + partitionsCount)
             .filter(partition -> partition != currentPartition)
             .boxed()
             .toList();
     currentPartitionId = currentPartition;
+  }
+
+  /**
+   * Returns the list of other partitions known at construction time. For distributing commands to
+   * dynamically added partitions, use {@link #getOtherPartitionsForCount(int)} instead.
+   */
+  public List<Integer> getOtherPartitions() {
+    return otherPartitions;
+  }
+
+  /**
+   * Computes the list of other partitions for an arbitrary partition count. This is used by the
+   * {@link io.camunda.zeebe.engine.processing.deployment.distribute.DeploymentRedistributor} to
+   * distribute deployments to newly added partitions.
+   */
+  public List<Integer> getOtherPartitionsForCount(final int totalPartitionCount) {
+    return IntStream.range(Protocol.START_PARTITION_ID, Protocol.START_PARTITION_ID + totalPartitionCount)
+        .filter(partition -> partition != currentPartitionId)
+        .boxed()
+        .toList();
   }
 
   /**

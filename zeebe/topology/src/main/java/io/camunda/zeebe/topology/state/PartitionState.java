@@ -16,6 +16,10 @@ public record PartitionState(State state, int priority) {
     return new PartitionState(State.JOINING, priority);
   }
 
+  public static PartitionState bootstrapping(final int priority) {
+    return new PartitionState(State.BOOTSTRAPPING, priority);
+  }
+
   public PartitionState toActive() {
     if (state == State.LEAVING) {
       throw new IllegalStateException(
@@ -24,12 +28,17 @@ public record PartitionState(State state, int priority) {
     return new PartitionState(State.ACTIVE, priority);
   }
 
+  public boolean isBootstrapping() {
+    return state == State.BOOTSTRAPPING;
+  }
+
   public PartitionState toLeaving() {
     return new PartitionState(State.LEAVING, priority);
   }
 
   public enum State {
     UNKNOWN,
+    BOOTSTRAPPING,
     JOINING,
     ACTIVE,
     LEAVING

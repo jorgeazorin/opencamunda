@@ -49,4 +49,17 @@ public sealed interface TopologyManagementRequest {
       return false;
     }
   }
+
+  /**
+   * Request to add new partitions to the cluster. The new partitions are bootstrapped from scratch
+   * (empty state) and distributed across the given members.
+   *
+   * @param newPartitionCount the desired total number of partitions (must be > current count)
+   * @param members the brokers across which new partitions will be distributed
+   * @param replicationFactor the replication factor for the new partitions
+   * @param dryRun if true, only simulate the change
+   */
+  record AddPartitionsRequest(
+      int newPartitionCount, Set<MemberId> members, int replicationFactor, boolean dryRun)
+      implements TopologyManagementRequest {}
 }

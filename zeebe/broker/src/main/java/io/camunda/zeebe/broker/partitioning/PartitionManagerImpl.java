@@ -381,4 +381,50 @@ public final class PartitionManagerImpl implements PartitionManager, PartitionCh
         });
     return result;
   }
+
+  @Override
+  public ActorFuture<Void> bootstrap(
+      final int partitionId, final Map<MemberId, Integer> membersWithPriority) {
+    final var result = concurrencyControl.<Void>createFuture();
+
+    // Determine the primary (highest priority member)
+    final int targetPriority = Collections.max(membersWithPriority.values());
+    final var members = membersWithPriority.keySet();
+    final var primaries =
+        membersWithPriority.entrySet().stream()
+            .filter(entry -> entry.getValue() == targetPriority)
+            .map(Entry::getKey)
+            .toList();
+
+    MemberId primary = null;
+    if (primaries.size() == 1) {
+      primary = primaries.get(0);
+    }
+
+    final var partitionMetadata =
+        new PartitionMetadata(
+            PartitionId.from(GROUP_NAME, partitionId),
+            members,
+            membersWithPriority,
+            targetPriority,
+            primary);
+
+    // Bootstrap uses the same path as initial cluster start — creates a new Raft group from empty
+    concurrencyControl.run(
+        () -> {
+          LOGGER.info("Bootstrapping new partition {} with members {}", partitionId, members);
+          concurrencyControl.runOnCompletion(
+              bootstrapPartition(partitionMetadata),
+              (ok, error) -> {
+                if (error != null) {
+                  LOGGER.error("Failed to bootstrap partition {}", partitionId, error);
+                  result.completeExceptionally(error);
+                } else {
+                  LOGGER.info("Successfully bootstrapped partition {}", partitionId);
+                  result.complete(null);
+                }
+              });
+        });
+    return result;
+  }
 }

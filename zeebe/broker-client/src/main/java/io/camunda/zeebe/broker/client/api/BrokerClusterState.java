@@ -46,4 +46,16 @@ public interface BrokerClusterState {
   String getBrokerVersion(int brokerId);
 
   PartitionHealthStatus getPartitionHealth(int brokerId, int partition);
+
+  /**
+   * Returns the partition counts from all active routing generations. During partition scaling
+   * transitions, messages must be routed to target partitions computed for each active generation's
+   * count. When fully converged (no scaling in progress), returns a singleton set with the current
+   * partition count.
+   *
+   * @return set of active routing partition counts, or null if routing generations are not available
+   */
+  default Set<Integer> getActiveRoutingPartitionCounts() {
+    return null;
+  }
 }
